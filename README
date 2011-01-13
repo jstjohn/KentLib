@@ -5,6 +5,28 @@ jkweb.a and including the headers in the 'inc' folder.
 I will post an example of doing this in gcc soon.
 
 
+==Install Instructions==
+
+0.0. If you have a ppc or alpha processor, then you
+may need to change the line in the Makefile
+that says MACHTYPE=x86_64. As of now 'ppc' and
+'alpha' are the only two processor types that
+are defined with any special meaning in this subset.
+To quickly check whether or not this is still true
+just run: `grep -R -i "MACHTYPE" *` and ignore the result
+from the Makefile itself. If your processor is listed
+in one of the lines, you should probably change the
+MACHTYPE= line to reflect your processor type.
+
+0.1. If you want to use a different compiler than gcc
+you will need to change the CC=gcc line in the
+Makefile. You may also need to change the compiler flags.
+
+1. run `make`
+
+2. done
+
+
 
 *** TEXT FROM ORIGINAL KENT SOURCE LIB README ***
 This directory contains general purpose, web oriented,

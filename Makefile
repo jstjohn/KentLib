@@ -1,6 +1,7 @@
 CC=gcc
+MACHTYPE=x86_64
 LDFLAGS=
-CFLAGS=-c -Wall -Iinc
+CFLAGS=-c -Wall -Iinc -DMACHTYPE_$(MACHTYPE)
 LIBDIR=lib
 INCDIR=inc
 SOURCES=$(shell find $(LIBDIR) -type f -name '*.c')
