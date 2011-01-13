@@ -1,3 +1,8 @@
+Works by compiling object files for the library, 
+and then archiving them into jkweb.a. You can then
+use these libs in your other programs by linking to
+jkweb.a and including the headers in the 'inc' folder.
+I will post an example of doing this in gcc soon.
 
 
 
