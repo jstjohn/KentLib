@@ -1,4 +1,7 @@
 *.o
 *.a
 *.so
+*.out
+*.dll
+*.tmp
 
