@@ -3,7 +3,8 @@ and then archiving them into jkweb.a. You can then
 use these libs in your other programs by linking to
 libkent.a and including the headers in the 'inc' folder.
 
-
+I am currently working on adding support for building
+shared libraries.
 
 
 
