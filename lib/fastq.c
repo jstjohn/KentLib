@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include "common.h"
 #include "linefile.h"
+#include "dnautil.h"
 #include <math.h>
 #include <string.h>
 #include "fastq.h"
@@ -39,210 +40,229 @@ void printFastqItem(FILE *fp, struct fastqItem *fq);
 */
 
 
+
 struct fastqItem * allocFastqItem()
 {
-	struct fastqItem *fq = (struct fastqItem *) malloc(sizeof(struct fastqItem ));
-	fq->id = (char *)malloc(sizeof(char) * MAX_ID_LENGTH);
-	fq->seq = (char *)malloc(sizeof(char) * MAX_SEQ_LENGTH);
-	fq->score = (char*)malloc(sizeof(char) * MAX_SEQ_LENGTH);
-	return fq;
+  struct fastqItem *fq = (struct fastqItem *) malloc(sizeof(struct fastqItem ));
+  fq->id = (char *)malloc(sizeof(char) * MAX_ID_LENGTH);
+  fq->seq = (char *)malloc(sizeof(char) * MAX_SEQ_LENGTH);
+  fq->score = (char*)malloc(sizeof(char) * MAX_SEQ_LENGTH);
+  return fq;
 }
 
 void freeFastqItem(struct fastqItem * fq)
 {
-	if(fq)
-	{
-		if(fq->id)
-		{
-			free(fq->id);
-			fq->id = NULL;
-		}
-		if(fq->seq)
-		{
-			free(fq->seq);
-			fq->seq = NULL;
-		}
-		if(fq->score)
-		{
-			free(fq->score);
-			fq->score = NULL;
-		}
-		free(fq);
-		fq = NULL;
-	}
+  if(fq)
+  {
+    if(fq->id)
+    {
+      free(fq->id);
+      fq->id = NULL;
+    }
+    if(fq->seq)
+    {
+      free(fq->seq);
+      fq->seq = NULL;
+    }
+    if(fq->score)
+    {
+      free(fq->score);
+      fq->score = NULL;
+    }
+    free(fq);
+    fq = NULL;
+  }
 }
 
 
-void printFastqItem(FILE *fp, struct fastqItem *fq)
+inline void printFastqItem(FILE *fp, struct fastqItem *fq)
 {
-	int i;
-	fprintf(fp,"@%s\n",fq->id);
-	for(i=0; i < fq->len; i++)
-	{
-		fprintf(fp,"%c",fq->seq[i]);
-	}
-	fprintf(fp,"\n+\n");
-	for(i=0; i< fq->len; i++)
-	{
-		fprintf(fp,"%c",fq->score[i]);
-	}
-	fprintf(fp,"\n");
+  int i;
+  fprintf(fp,"@%s\n",fq->id);
+  for(i=0; i < fq->len; i++)
+  {
+    fprintf(fp,"%c",fq->seq[i]);
+  }
+  fprintf(fp,"\n+\n");
+  for(i=0; i< fq->len; i++)
+  {
+    fprintf(fp,"%c",fq->score[i]);
+  }
+  fprintf(fp,"\n");
 }
 
 
 
 boolean fastqItemNext(struct lineFile *lf, struct fastqItem *fq)
 {
-	int start = 0;
-	char *line = NULL;
-	boolean gotId = FALSE;
-	boolean gotSeq = FALSE;
-	boolean gotScore = FALSE;
-	//Get the ID line
-	gotId = lineFileNextReal(lf,&line); //grab next non-blank non-comment line, should have @
-	if (! gotId) return FALSE;
-	line = skipLeadingSpaces(line);
-	eraseTrailingSpaces(line);
-	if (line[0] != '@')
-		errAbort("ERROR: %s doesn't seem to be fastq format.  "
-				"Expecting '@' start of line %d, got %c.",
-				lf->fileName, lf->lineIx, line[0]);
-	//copyID(line,fq->id,1,strlen(line));
-	//sprintf(fq->id, "%s",line+1);
-	strcpy(fq->id,line+1);
-	//get the Sequence
-	int seqLen = 0;
-	while (TRUE)
-	{
-		gotSeq = lineFileNextReal(lf,&line);
-		if (! gotSeq) lineFileUnexpectedEnd(lf);
-		line = skipLeadingSpaces(line);
-		eraseTrailingSpaces(line);
-		if (line[0] == '+') break;
-		int partLen = strlen(line);
-		start = seqLen;
-		seqLen += partLen;
-		//strAdd(line,fq->seq,0,partLen,start);
-		//sprintf((fq->seq)+start,"%s",line);
-		strcpy((fq->seq)+start,line);
-		if (line[0] == '@')
-			errAbort("ERROR: %s doesn't seem to be fastq format.  "
-					"Expecting sequence at line %d, got %c.",
-					lf->fileName, lf->lineIx, line[0]);
-	}
-	fq->len=seqLen;
-	//skip the +, just checked in previous loop
+  int start = 0;
+  char *line = NULL;
+  boolean gotId = FALSE;
+  boolean gotSeq = FALSE;
+  boolean gotScore = FALSE;
+  //Get the ID line
+  gotId = lineFileNextReal(lf,&line); //grab next non-blank non-comment line, should have @
+  if (! gotId) return FALSE;
+  line = skipLeadingSpaces(line);
+  eraseTrailingSpaces(line);
+  if (line[0] != '@')
+    errAbort("ERROR: %s doesn't seem to be fastq format.  "
+        "Expecting '@' start of line %d, got %c.",
+        lf->fileName, lf->lineIx, line[0]);
+  //copyID(line,fq->id,1,strlen(line));
+  //sprintf(fq->id, "%s",line+1);
+  strcpy(fq->id,line+1);
+  //get the Sequence
+  int seqLen = 0;
+  while (TRUE)
+  {
+    gotSeq = lineFileNextReal(lf,&line);
+    if (! gotSeq) lineFileUnexpectedEnd(lf);
+    line = skipLeadingSpaces(line);
+    eraseTrailingSpaces(line);
+    if (line[0] == '+') break;
+    int partLen = strlen(line);
+    start = seqLen;
+    seqLen += partLen;
+    //strAdd(line,fq->seq,0,partLen,start);
+    //sprintf((fq->seq)+start,"%s",line);
+    strcpy((fq->seq)+start,line);
+    if (line[0] == '@')
+      errAbort("ERROR: %s doesn't seem to be fastq format.  "
+          "Expecting sequence at line %d, got %c.",
+          lf->fileName, lf->lineIx, line[0]);
+  }
+  fq->len=seqLen;
+  //skip the +, just checked in previous loop
 
-	//get the Score, check that len(score) == len(seq)
-	seqLen=0;
-	while(TRUE)
-	{
-		//the problem is that @ and + are valid score characters
-		gotScore = lineFileNextReal(lf,&line);
-		if(! gotScore) break;
-		line = skipLeadingSpaces(line);
-		eraseTrailingSpaces(line);
-		int partLen = strlen(line);
-		if (line[0] == '@' && seqLen+partLen > fq->len)
-		{
-			lineFileReuse(lf); //start with this line next time
-			break;
-		}
-		if (line[0] == '+' && seqLen+partLen > fq->len)
-			errAbort("ERROR: %s doesn't seem to be fastq format.  "
-					"Expecting sequence at line %d, got %c.",
-					lf->fileName, lf->lineIx, line[0]);
-		//strAdd(line,fq->score,0,partLen,start);
-		//sprintf((fq->score)+start,"%s",line);
-		start=seqLen;
-		seqLen += partLen;
-		strcpy((fq->score)+start,line);
-	}
-	if (seqLen != fq->len)
-		errAbort("ERROR: %s has sequences and score strings that "
-				"are not the same length. Problem at line %d.",
-				lf->fileName, lf->lineIx);
-	return TRUE;
+  //get the Score, check that len(score) == len(seq)
+  seqLen=0;
+  while(TRUE)
+  {
+    //the problem is that @ and + are valid score characters
+    gotScore = lineFileNextReal(lf,&line);
+    if(! gotScore) break;
+    line = skipLeadingSpaces(line);
+    eraseTrailingSpaces(line);
+    int partLen = strlen(line);
+    if (line[0] == '@' && seqLen+partLen > fq->len)
+    {
+      lineFileReuse(lf); //start with this line next time
+      break;
+    }
+    if (line[0] == '+' && seqLen+partLen > fq->len)
+      errAbort("ERROR: %s doesn't seem to be fastq format.  "
+          "Expecting sequence at line %d, got %c.",
+          lf->fileName, lf->lineIx, line[0]);
+    //strAdd(line,fq->score,0,partLen,start);
+    //sprintf((fq->score)+start,"%s",line);
+    start=seqLen;
+    seqLen += partLen;
+    strcpy((fq->score)+start,line);
+  }
+  if (seqLen != fq->len)
+    errAbort("ERROR: %s has sequences and score strings that "
+        "are not the same length. Problem at line %d.",
+        lf->fileName, lf->lineIx);
+  return TRUE;
 }
 
-void convPhred33ToPhred64( struct fastqItem *fq )
+inline void convPhred33ToPhred64( struct fastqItem *fq )
 {
-	phred33ToPhred64(fq->seq,fq->len);
+  phred33ToPhred64(fq->seq,fq->len);
 }//end phred33To64
 
-void convPhred64ToPhred33(struct fastqItem *fq)
+inline void convPhred64ToPhred33(struct fastqItem *fq)
 {
-	phred64ToPhred33(fq->seq,fq->len);
+  phred64ToPhred33(fq->seq,fq->len);
 }
 
-void phred33ToPhred64( char * p33, int l )
+inline void phred33ToPhred64( char * p33, int l )
 {
-	int i;
-	for(i=0;i<l;i++)
-	{
-		p33[i] = phredToPhred64(phred33ToPhred(p33[i]));
-	}
+  int i;
+  for(i=0;i<l;i++)
+  {
+    p33[i] = phredToPhred64(phred33ToPhred(p33[i]));
+  }
 }
 
-void phred64ToPhred33( char * p64, int l)
+inline void phred64ToPhred33( char * p64, int l)
 {
-	int i;
-	for(i=0;i<l;i++)
-	{
-		p64[i] = phredToPhred33(phred64ToPhred(p64[i]));
-	}
+  int i;
+  for(i=0;i<l;i++)
+  {
+    p64[i] = phredToPhred33(phred64ToPhred(p64[i]));
+  }
 }
 
-char phredToPhred33( int p )
+inline char phredToPhred33( int p )
 {
-	if (p > MAX_PHRED) p=MAX_PHRED;
-	else if (p < MIN_PHRED) p=MIN_PHRED;
-	return ((char) (p + 33));
+  if (p > MAX_PHRED) p=MAX_PHRED;
+  else if (p < MIN_PHRED) p=MIN_PHRED;
+  return ((char) (p + 33));
 }
 
-int phred33ToPhred( char p )
+inline int phred33ToPhred( char p )
 {
-	return ((int)p) - 33;
+  return ((int)p) - 33;
 }
 
-int phred64ToPhred( char p )
+inline int phred64ToPhred( char p )
 {
-	return ((int)p) - 64;
+  return ((int)p) - 64;
 }
 
-char phredToPhred64( int p )
+inline char phredToPhred64( int p )
 {
-	if (p > MAX_PHRED) p=MAX_PHRED;
-	else if (p < MIN_PHRED) p=MIN_PHRED;
-	return ((char) (p + 64));
+  if (p > MAX_PHRED) p=MAX_PHRED;
+  else if (p < MIN_PHRED) p=MIN_PHRED;
+  return ((char) (p + 64));
 }
 
-int doubleToPhred( double p )
+inline int doubleToPhred( double p )
 /* formula: -10 log10(p) */
 {
-	double res = -10.0 * log10(p);
-	if (res > MAX_PHRED) res=MAX_PHRED;
-	else if (res < MIN_PHRED) res=MIN_PHRED;
-	return ((int) (res +0.5));  //guarenteed >= 0
+  double res = -10.0 * log10(p);
+  if (res > MAX_PHRED) res=MAX_PHRED;
+  else if (res < MIN_PHRED) res=MIN_PHRED;
+  return ((int) (res +0.5));  //guarenteed >= 0
 }
 
-double phredToDouble( int p )
+inline double phredToDouble( int p )
 /* formula: 10^(-p/10)  */
 {
-	return 1.0/pow(10,((double)p)/10.0);
+  return 1.0/pow(10,((double)p)/10.0);
 }
 
 /* Some Functions that can now be made from  a combination of existing functions */
 
-double phred33ToDouble( char p )
+inline double phred33ToDouble( char p )
 {
-	return phredToDouble(phred33ToPhred(p));
+  return phredToDouble(phred33ToPhred(p));
 }
 
-double phred64ToDouble( char p )
+inline double phred64ToDouble( char p )
 {
-	return phredToDouble(phred64ToPhred(p));
+  return phredToDouble(phred64ToPhred(p));
 }
 
+void strrevi(char *s,int n)
+{
+  int i=0;
+  while (i<n/2)
+  {
+    *(s+n) = *(s+i);//uses the null character as the temporary storage.
+    *(s+i) = *(s + n - i -1);
+    *(s+n-i-1) = *(s+n);
+    i++;
+  }
+  *(s+n) = '\0';
+}
+
+inline void reverseComplementFastqItem(struct fastqItem *fq){
+  //reverse complement the seq, and reverse the quality string
+  strrevi(fq->score,fq->len);
+  reverseComplement((DNA *)fq->seq,fq->len);
+}
 
 
