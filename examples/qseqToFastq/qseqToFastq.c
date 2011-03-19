@@ -20,10 +20,6 @@
  *
  *
  */
-
-
-
-
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
@@ -41,6 +37,8 @@
 Global variables
  */
 bool verboseOut = false;
+bool p33To64 = false;
+bool p64To33 = false;
 
 void usage()
 /* Explain usage and exit. */
@@ -54,6 +52,8 @@ void usage()
       "\t-read2=FILE\tFile name holding the second qseq mate.\n"
       "\t-prefix=NAME\tPrefix for output, example 's_5_', would result in s_5_1.fastq.gz (read 1) s_5_2.fastq.gz (read 2) and s_5_s.fastq.gz (singleton reads)\n"
       "\noptions:\n"
+      "\t-p33To64\tConvert reads from ascii phred+33 to ascii phred+64 (default, no, just output whatever is in the QSEQ)\n"
+      "\t-p64To33\tConvert reads from ascii phred+64 to ascii phred+33 (default, no, just output whatever is in the QSEQ)\n"
       "\t-verbose\tOutput verbose debug messages to stderr.\n\n"
   );
 }//end usage()
@@ -64,9 +64,37 @@ static struct optionSpec options[] = {
     {"read1",OPTION_STRING},
     {"read2",OPTION_STRING},
     {"prefix",OPTION_STRING},
+    {"p33To64",OPTION_BOOLEAN},
+    {"p64To33",OPTION_BOOLEAN},
     {"verbose",OPTION_BOOLEAN},
     {NULL, 0}
 }; //end options()
+
+
+/**
+ * Convert a phred33 string into a phred64 string, doing illumina's minimum 'B' score thing
+ */
+inline void phred33ToPhred64( char * p33, int l )
+{
+  int i;
+  for(i=0;i<l;i++)
+  {
+    p33[i] = p33[i]=='!'?'B':p33[i]+31;
+  }
+}
+
+/**
+ * Convert a phred64 string into a phred64 string assuming illumina's minimum 'B' score thing
+ */
+inline void phred64ToPhred33( char * p64, int l)
+{
+  int i;
+  for(i=0;i<l;i++)
+  {
+    p64[i] = p64[i]=='B'?'!':p64[i]-31;
+  }
+}
+
 
 
 
@@ -102,19 +130,38 @@ int qseqToFastq(char *inread1, char *inread2, char *outread1, char *outread2, ch
   gzFile *zouts = gzopen(outreads,"wb");
   char *line1;
   char *line2;
+  char *pscore1;
+  char *pscore2;
   while(lineFileNextReal(lf1,&line1) && lineFileNextReal(lf2,&line2)){
     char *split1[11];
     char *split2[11];
     chopByWhite(line1,split1,11);
     chopByWhite(line2,split2,11);
+    pscore1 = split1[9];
+    pscore2 = split2[9];
     int qc1 = atoi(split1[10]);
     int qc2 = atoi(split2[10]);
     if(qc1 == 1 && qc2 == 1){
+      if(p33To64){
+        phred33ToPhred64(pscore1,strlen(pscore1));
+        phred33ToPhred64(pscore2,strlen(pscore2));
+      }else if(p64To33){
+        phred64ToPhred33(pscore1,strlen(pscore1));
+        phred64ToPhred33(pscore2,strlen(pscore2));
+      }
       printFastqFromSplitQseq(zout1, split1);
       printFastqFromSplitQseq(zout2, split2);
     }else if(qc1 == 1){
+      if(p33To64)
+        phred33ToPhred64(pscore1,strlen(pscore1));
+      else if(p64To33)
+        phred64ToPhred33(pscore1,strlen(pscore1));
       printFastqFromSplitQseq(zouts, split1);
     }else if(qc2 == 1){
+      if(p33To64)
+        phred33ToPhred64(pscore2,strlen(pscore2));
+      else if(p64To33)
+        phred64ToPhred33(pscore2,strlen(pscore2));
       printFastqFromSplitQseq(zouts, split2);
     }
   }
@@ -132,7 +179,10 @@ int main(int argc, char *argv[])
   char *read2 = NULL;
   char *prefix= NULL;
   optionInit(&argc, argv, options);
+
   verboseOut = optionExists("verbose");
+  p33To64 = optionExists("p33To64");
+  p64To33 = optionExists("p64To33");
   read1 = optionVal("read1",NULL);
   read2 = optionVal("read2",NULL);
   prefix = optionVal("prefix",NULL);
