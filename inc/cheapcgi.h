@@ -17,24 +17,27 @@
 #include "hash.h"
 #endif
 
-#define COLOR_BG_DEFAULT        "#FFFEE8"
-#define COLOR_BG_ALTDEFAULT     "#FFF9D2"
-#define COLOR_BG_DEFAULT_DARKER "#FCECC0"
-#define COLOR_BG_GHOST          "#EEEEEE"
-#define COLOR_BG_PALE           "#F8F8F8"
-#define COLOR_DARKGREEN         "#008800"
-#define COLOR_LTGREEN           "#CCFFCC"
-#define COLOR_DARKBLUE          "#000088"
-#define COLOR_BLUE_BUTTON       "#91B3E6"
-#define COLOR_DARKGREY          "#666666"
-#define COLOR_LTGREY            "#CCCCCC"
-#define COLOR_YELLOW            "#FFFF00"
-#define COLOR_LTYELLOW          "#FFF380"
-#define COLOR_WHITE             "#FFFFFF"
-#define COLOR_RED               "#AA0000"
-#define COLOR_TRACKLIST_LEVEL1  COLOR_BG_DEFAULT
-#define COLOR_TRACKLIST_LEVEL2  COLOR_BG_ALTDEFAULT
-#define COLOR_TRACKLIST_LEVEL3  COLOR_BG_DEFAULT_DARKER
+#define COLOR_BG_DEFAULT         "#FFFEE8"
+#define COLOR_BG_ALTDEFAULT      "#FFF9D2"
+#define COLOR_BG_DEFAULT_DARKER  "#FCECC0"
+#define COLOR_BG_DEFAULT_DARKEST "#EED5B7"
+#define COLOR_BG_GHOST           "#EEEEEE"
+#define COLOR_BG_PALE            "#F8F8F8"
+#define COLOR_BG_HEADER_LTBLUE   "#D9E4F8"
+#define COLOR_DARKGREEN          "#008800"
+#define COLOR_LTGREEN            "#CCFFCC"
+#define COLOR_DARKBLUE           "#000088"
+#define COLOR_BLUE_BUTTON        "#91B3E6"
+#define COLOR_DARKGREY           "#666666"
+#define COLOR_LTGREY             "#CCCCCC"
+#define COLOR_YELLOW             "#FFFF00"
+#define COLOR_LTYELLOW           "#FFF380"
+#define COLOR_WHITE              "#FFFFFF"
+#define COLOR_RED                "#AA0000"
+#define COLOR_TRACKLIST_LEVEL1   COLOR_BG_DEFAULT
+#define COLOR_TRACKLIST_LEVEL2   COLOR_BG_ALTDEFAULT
+#define COLOR_TRACKLIST_LEVEL3   COLOR_BG_DEFAULT_DARKER
+#define COLOR_TRACKLIST_LEVEL4   COLOR_BG_DEFAULT_DARKEST
 
 void initSigHandlers(boolean dumpStack);
 /* set handler for various terminal signals for logging purposes.
@@ -74,7 +77,14 @@ char *cgiScriptName();
 /* Return name of script so libs can do context-sensitive stuff. */
 
 char *cgiServerName();
-/* Return name of server */
+/* Return name of server, better to use cgiServerNamePort() for
+   actual URL construction */
+
+char *cgiServerPort();
+/* Return port number of server */
+
+char *cgiServerNamePort();
+/* Return name of server with port if different than 80 */
 
 char *cgiRemoteAddr();
 /* Return IP address of client (or "unknown"). */
@@ -323,6 +333,15 @@ void cgiDropDownWithTextValsAndExtra(char *name, char *text[], char *values[],
     int count, char *selected, char *extra);
 /* Make a drop-down list with both text and values. */
 
+char *cgiMakeSelectDropList(boolean multiple, char *name, struct slPair *valsAndLabels,char *selected, char *anyAll,char *extraClasses, char *extraHtml);
+// Returns allocated string of HTML defining a drop-down select (if multiple, REQUIRES ui-dropdownchecklist.js)
+// In valsAndLabels, val (pair->name) must be filled in but label (pair->val) may be NULL.
+// selected, if not NULL is a val found in the valsAndLabels (multiple then comma delimited list).  If null and anyAll not NULL, that will be selected
+// anyAll, if not NULL is the string for an initial option.  It can contain val and label, delimited by a comma
+// extraHtml, if not NULL contains id, javascript calls and style.  It does NOT contain class definitions
+#define cgiMakeMultiSelectDropList(name, valsAndLabels, selected, anyAll, extraClasses, extraHtml)  cgiMakeSelectDropList(TRUE, (name), (valsAndLabels), (selected), (anyAll), (extraClasses), (extraHtml))
+#define cgiMakeSingleSelectDropList(name, valsAndLabels, selected, anyAll, extraClasses, extraHtml) cgiMakeSelectDropList(FALSE,(name), (valsAndLabels), (selected), (anyAll), (extraClasses), (extraHtml))
+
 void cgiMakeMultList(char *name, char *menu[], int menuSize, struct slName *checked, int length);
 /* Make a list of names which can have multiple selections.
  * Same as drop-down list except "multiple" is added to select tag */
@@ -452,6 +471,9 @@ void logCgiToStderr();
 void cgiResetState();
 /* This is for reloading CGI settings multiple times in the same program
  * execution.  No effect if state has not yet been initialized. */
+
+void cgiDown(float lines);
+// Drop down a certain number of lines (may be fractional)
 
 char *commonCssStyles();
 /* Returns a string of common CSS styles */

@@ -124,6 +124,31 @@ void htmlTextOut(char *s)
 htmTextOut(stdout, s);
 }
 
+char *htmlTextStripTags(char *s)
+/* Returns a cloned string with all html tags stripped out */
+{
+if (s == NULL)
+    return NULL;
+char *scrubbed = needMem(strlen(s));
+char *from=s;
+char *to=scrubbed;
+while(*from!='\0')
+    {
+    if (*from == '<')
+        {
+        from++;
+        while (*from!='\0' && *from != '>')
+            from++;
+        if (*from == '\0')  // The last open tag was never closed!
+            break;
+        from++;
+        }
+    else
+        *to++ = *from++;
+    }
+return scrubbed;
+}
+
 char *htmlEncodeText(char *s,boolean tagsOkay)
 /* Returns a cloned string with quotes replaced by html codes.
    Changes ',",\n and if not tagsOkay >,<,& to code equivalents.
@@ -163,7 +188,6 @@ strSwapStrs(cleanQuote, size,"'" ,"&#39;" ); // Shield single quotes
 
 return cleanQuote;
 }
-
 
 char *htmlWarnStartPattern()
 /* Return starting pattern for warning message. */
@@ -216,6 +240,7 @@ fprintf(f,"function hideWarnBox() {"
             "var endOfPage = document.body.innerHTML.substr(document.body.innerHTML.length-20);"
             "if(endOfPage.lastIndexOf('-- ERROR --') > 0) { history.back(); }"
           "}\n"); // Note that the OK button goes to prev page when this page is interrupted by the error.
+fprintf(f,"window.onunload = function(){}; // Trick to avoid FF back button issue.\n");
 fprintf(f,"</script>\n");
 }
 
@@ -361,7 +386,20 @@ void _htmStartWithHead(FILE *f, char *head, char *title, boolean printDocType, i
  * and CGI returned .htmls need, including optional head info */
 {
 if (printDocType)
+    {
+//#define TOO_TIMID_FOR_CURRENT_HTML_STANDARDS
+#ifdef TOO_TIMID_FOR_CURRENT_HTML_STANDARDS
     fputs("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\n", f);
+#else///ifndef TOO_TIMID_FOR_CURRENT_HTML_STANDARDS
+    char *browserVersion;
+    if (btIE == cgiClientBrowser(&browserVersion, NULL, NULL) && *browserVersion < '8')
+        fputs("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\n", f);
+    else
+        fputs("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">",f);
+    // Strict would be nice since it fixes atleast one IE problem (use of :hover CSS pseudoclass)
+    //fputs("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n",f);
+#endif///ndef TOO_TIMID_FOR_CURRENT_HTML_STANDARDS
+    }
 fputs("<HTML>", f);
 fprintf(f,"<HEAD>\n%s<TITLE>%s</TITLE>\n", head, title);
 fprintf(f, "\t<META http-equiv=\"Content-Script-Type\" content=\"text/javascript\">\n");
@@ -372,7 +410,7 @@ fputs("<BODY",f);
 if (htmlBackground != NULL )
     fprintf(f, " BACKGROUND=\"%s\"", htmlBackground);
 if (gotBgColor)
-    fprintf(f, " BGCOLOR=\"%X\"", htmlBgColor);
+    fprintf(f, " BGCOLOR=\"#%X\"", htmlBgColor);
 fputs(">\n",f);
 
 htmlWarnBoxSetup(f);
