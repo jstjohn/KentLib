@@ -163,7 +163,7 @@ scaffold2       12973   .       G       T,C     40      .       DP=6;VDB=0.0041;
       continue;
     int numRecords = chopByWhite(line,split,NUMCOLSVCF);
     if(sampleCount == 0){
-      sampleCount = numRecords;
+      sampleCount = numRecords-VCFSAMPLESTART;
     }
     char *seqId = split[0];
     if(strcmp(seqId,lastSeqId)!= 0){
@@ -210,7 +210,7 @@ int printHeterozygosity(FILE *out){
     int i;
     fprintf(out,"%s",s->name);
     for(i=0;i<sampleCount;i++){
-      fprintf(out,"\t%lf",s->length/(double)s->numHets[i]);
+      fprintf(out,"\t%lf",(double)s->numHets[i]/(double)s->length);
     }
     fprintf(out,"\n");
 
