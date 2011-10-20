@@ -234,12 +234,12 @@ int main(int argc, char *argv[])
   numSamples = optionInt("numSamples",0);
 
   if (vcf == NULL || sizes == NULL){
-    if(numSamples == 0)
-       fprintf(stderr, "Error: must provide the number of samples in the vcf file >= 1\n");
+//    if(numSamples == 0)
+//       fprintf(stderr, "Error: must provide the number of samples in the vcf file >= 1\n");
     if(vcf == NULL)
       fprintf(stderr,"Error: Must provide vcf file\n");
-//    if(sizes == NULL)
-//      fprintf(stderr,"Error: Must provide sequence size file\n");
+    if(sizes == NULL)
+      fprintf(stderr,"Error: Must provide sequence size file\n");
     usage();
   }
   fillSizes(sizes);
