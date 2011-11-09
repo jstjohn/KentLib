@@ -1,23 +1,11 @@
 /**
- * qseqToFastq
+ * gcLenAndCovStats
  *  Author: John St. John
- *  Date: 1/14/2010
+ *  Date: 11/8/2011
  *  
- *  Qseq format; Tab seperated on a single line:
-    0. Machine name (hopefully) unique
-    1. Run number: (hopefully) unique
-    2. lane number: [1..8]
-    3. Tile number: positive integer
-    4. X: x coordinate of the spot, (can be negative)
-    5. Y: y coordinate of the spot, can be negative)
-    6. Index: positive integer, should be greater than 0 (the files I see have it == to 0)
-    7. Read number, 1 for single read, 1 or 2 for paired end
-    8. sequence
-    9. quality, the calibrated quality string.
-    10. filter, did the read pass qc 0 - no, 1 - yes
-
-    Also note that '.' in the sequence is equivalent to 'N'.
- *
+ *  calculate:
+ *  Contig, Length, %GC, Mean(Shorth(Contig)), Mean(Contig), Min(Mean_Window(Contig)), Max(Mean_Window(Contig))
+ *  for every contig and print the results.
  *
  */
 #include <stdlib.h>
@@ -58,7 +46,7 @@ void usage()
       "gcLenAndCovStats -- Outputs some coverage and gc statistics given a fasta and the output of samtools depth.\n"
       "usage: samtools depth -q [min bq] -Q [min mq] | gcLenAndCovStats [required options]\n"
       "\n**required** options:\n"
-      "\t-fasta=FILE\tFile name holding the vcf file to parse.\n"
+      "\t-fasta=FILE\tFile name holding the fasta file to parse.\n"
   );
 }//end usage()
 
@@ -198,6 +186,7 @@ struct minMax minMaxMeanWindow(unsigned short *arr, int windowSize, int length){
     mymean = mean(arr+i,windowSize);
     if(first == 0){
       //initialize
+      first = 1;
       m.max = mymean;
       m.min = mymean;
     }else{
@@ -225,7 +214,7 @@ int printChromInfo(FILE *out){
     float mymeanshorth = meanShorth(s->cov,s->length);
     struct minMax mm = minMaxMeanWindow(s->cov, 50, s->length);
 
-    fprintf(out,"%s\t%d\t%f\t%f\t%f\t%f\n",s->name,s->length,mymeanshorth,mymean,mm.min,mm.max);
+    fprintf(out,"%s\t%d\t%f\t%f\t%f\t%f\t%f\n",s->name,s->length,s->gc,mymeanshorth,mymean,mm.min,mm.max);
   }
   return 0;
 }
