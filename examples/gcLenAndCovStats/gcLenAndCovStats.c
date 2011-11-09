@@ -211,7 +211,7 @@ int printChromInfo(FILE *out){
     qsort(s->cov,s->length,sizeof(unsigned short),isort);
     float mymean = mean(s->cov,s->length);
     float mymeanshorth = meanShorth(s->cov,s->length);
-    struct minMax mm = minMaxMeanWindow(s->cov, 50, s->length);
+    struct minMax mm = minMaxMeanWindow(s->cov, 30, s->length);
 
     fprintf(out,"%s\t%d\t%f\t%f\t%f\t%f\t%f\n",s->name,s->length,s->gc,mymeanshorth,mymean,mm.min,mm.max);
   }
