@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
+#include <float.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <string.h>
@@ -26,13 +27,16 @@
 /*
 Global variables
  */
+
+#define INF 999999999
+
 bool verboseOut = false;
 int sampleCount = 0;
 struct cov_gc_stats_hash {
     char name[25];                /* key (structure POINTS TO string */
     unsigned length;
     float gc;
-    unsigned short *cov; /* initialize to the sequence length */
+    unsigned short int *cov; /* initialize to the sequence length */
     UT_hash_handle hh;         /* makes this structure hashable */
 };
 
@@ -112,10 +116,10 @@ int fillCoverage(void)
   while(lineFileNextReal(lf,&line)){
     // if line starts with "#" skip it
     char *split[3];
-    int numRecords = chopByWhite(line,split,3);
+    chopByWhite(line,split,3);
     char *seqId = split[0];
     int pos0 = atoi(split[1])-1;
-    int cov = atoi(split[2]);
+    int cov = min(SHRT_MAX,atoi(split[2]));
 
     if(strcmp(seqId,lastSeqId)!= 0){
       //update the pointer to our chrom info struct if
@@ -137,7 +141,7 @@ int isort(const void *x, const void *y) {
 
 float mean(unsigned short *arr, int length){
   int i;
-  unsigned int sum;
+  unsigned int sum = 0;
   for(i=0;i<length;i++){
     sum += arr[i];
   }
@@ -147,9 +151,9 @@ float mean(unsigned short *arr, int length){
 float meanShorth(unsigned short *arr, int length){
   int i = 0;
   //get the starting position of the shorth
-  int halfLen = length/2; //floor
+  int halfLen = length>>1; //floor of division by 2
   int minDiff = INT_MAX;
-  int shorthStart = -1;
+  int shorthStart = 0;
 
   //get the shorth info
   for(i=0;i<halfLen;i++){
@@ -161,8 +165,6 @@ float meanShorth(unsigned short *arr, int length){
       minDiff = diff;
     }
   }
-
-  int upperBounds = shorthStart+halfLen;
 
   //return the mean of the half interval starting at
   //the shorth start
@@ -176,26 +178,24 @@ struct minMax{
 
 struct minMax minMaxMeanWindow(unsigned short *arr, int windowSize, int length){
   struct minMax m;
-  m.min = 0;
-  m.max = 0;
+  m.min = FLT_MAX;
+  m.max = FLT_MIN;
   int i;
-  int first = 0;
   int upper = length-(windowSize*2);
   float mymean;
-  for(i=windowSize;i<upper;i++){
+  for(i=windowSize; i<upper; i += windowSize){
     mymean = mean(arr+i,windowSize);
-    if(first == 0){
-      //initialize
-      first = 1;
-      m.max = mymean;
-      m.min = mymean;
-    }else{
     if(mymean > m.max)
       m.max = mymean;
     if(mymean < m.min)
       m.min = mymean;
-    }
   }
+
+  //handle when nothing happens, ie really short sequences
+  if (m.min == FLT_MAX)
+    m.min=0;
+  if (m.max == FLT_MIN)
+    m.max=0;
 
   return m;
 }
@@ -206,7 +206,6 @@ int printChromInfo(FILE *out){
   HASH_ITER(hh, chrInfo, s, tmp) {
 //      HASH_DEL(chrSizes,s);  /* delete; users advances to next */
 //      free(s);            /* optional- if you want to free  */
-    int i;
 
     //sort the array
     qsort(s->cov,s->length,sizeof(unsigned short),isort);
