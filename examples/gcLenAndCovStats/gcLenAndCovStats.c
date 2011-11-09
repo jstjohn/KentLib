@@ -135,7 +135,7 @@ int fillCoverage(void)
 }
 
 int isort(const void *x, const void *y) {
-  return (*(int*)x - *(int*)y);
+  return (*(unsigned short int*)x - *(unsigned short int*)y);
 }
 
 
