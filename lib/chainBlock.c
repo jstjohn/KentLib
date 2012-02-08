@@ -9,7 +9,6 @@
 #include "dlist.h"
 #include "chainBlock.h"
 
-static char const rcsid[] = "$Id: chainBlock.c,v 1.17 2005/04/10 14:41:21 markd Exp $";
 
 struct kdBranch
 /* A kd-tree. That is a binary tree which partitions the children
@@ -287,7 +286,6 @@ static void findBestPredecessors(struct kdTree *tree, struct kdLeaf *leafList,
 {
 static struct predScore noBest;
 struct kdLeaf *leaf;
-struct kdLeaf *bestLeaf = NULL;
 double bestScore = 0;
 
 for (leaf = leafList; leaf != NULL; leaf = leaf->next)
@@ -303,7 +301,6 @@ for (leaf = leafList; leaf != NULL; leaf = leaf->next)
     if (bestScore < leaf->totalScore)
         {
 	bestScore = leaf->totalScore;
-	bestLeaf = leaf;
 	}
     }
 }

@@ -13,7 +13,6 @@
 #include "options.h"
 #include <limits.h>
 
-static char const rcsid[] = "$Id: options.c,v 1.29 2009/12/02 19:10:38 kent Exp $";
 
 #ifdef MACHTYPE_alpha
     #define strtoll strtol
@@ -318,11 +317,12 @@ char *optionVal(char *name, char *defaultVal)
 {
 char *ret;
 /* if a optionSpec was used, make sure this option is not a multi option */
-if(optionSpecification != NULL) {
+if(optionSpecification != NULL) 
+    {
     struct optionSpec *spec = matchingOption(name, optionSpecification);
     if(spec != NULL && (spec->flags & OPTION_MULTI))    
         errAbort("ERROR: optionVal cannot be used to get the value of an OPTION_MULTI");
-}
+    }
 
 ret = optGet(name);
 if (ret == NULL)

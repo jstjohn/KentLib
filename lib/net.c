@@ -21,7 +21,6 @@
 #include "sqlNum.h"
 #include "obscure.h"
 
-static char const rcsid[] = "$Id: net.c,v 1.80 2010/04/14 07:42:06 galt Exp $";
 
 /* Brought errno in to get more useful error messages */
 
@@ -1348,7 +1347,9 @@ while(TRUE)
 	    {
 	    mustUseProxyAuth = TRUE;
 	    }
-	else if (byteRangeUsed)
+	else if (byteRangeUsed 
+	    /* hack for Apache bug 2.2.20 and 2.2.21 2011-10-21 should be OK to remove after one year. */
+		&& !(sameString(code, "200") && byteRangeStart == 0 && byteRangeEnd == -1))  
 	    {
 	    if (!sameString(code, "206"))
 		{
@@ -1411,7 +1412,9 @@ if (mustUseProxy ||  mustUseProxyAuth)
 	proxyLocation ? proxyLocation : "not given");
     return FALSE;
     }
-if (byteRangeUsed && !foundContentRange)
+if (byteRangeUsed && !foundContentRange
+	    /* hack for Apache bug 2.2.20 and 2.2.21 2011-10-21 should be OK to remove after one year. */
+		&& !(byteRangeStart == 0 && byteRangeEnd == -1))  
     {
     char bre[256];
     safef(bre, sizeof bre, "%lld", (long long)byteRangeEnd);

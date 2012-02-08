@@ -9,7 +9,6 @@
 #include "obscure.h"
 #include "dystring.h"
 
-static char const rcsid[] = "$Id: hash.c,v 1.51 2009/11/10 22:46:19 angie Exp $";
 
 /*
  * Hash a string key.  This code is taken from Tcl interpreter. I was borrowed
@@ -455,6 +454,15 @@ int hashElCmp(const void *va, const void *vb)
 const struct hashEl *a = *((struct hashEl **)va);
 const struct hashEl *b = *((struct hashEl **)vb);
 return strcmp(a->name, b->name);
+}
+
+int hashElCmpWithEmbeddedNumbers(const void *va, const void *vb)
+/* Compare two hashEl by name sorting including numbers within name,
+ * suitable for chromosomes, genes, etc. */
+{
+const struct hashEl *a = *((struct hashEl **)va);
+const struct hashEl *b = *((struct hashEl **)vb);
+return cmpStringsWithEmbeddedNumbers(a->name, b->name);
 }
 
 void *hashElFindVal(struct hashEl *list, char *name)
