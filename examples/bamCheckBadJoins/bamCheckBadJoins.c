@@ -41,7 +41,7 @@
  */ 
 
 void usage()
-/* Explain usage and exit. */
+  /* Explain usage and exit. */
 {
   errAbort(
       "bamCheckBadJoins -- check for support of different contig joins within scaffolds, reports summary.\n"
@@ -57,13 +57,13 @@ void usage()
 
 
 static struct optionSpec options[] = {
-    /* Structure holding command line options */
-    {"window",OPTION_INT},
-    {"edges",OPTION_INT},
-    {"minq",OPTION_INT},
-    {"help",OPTION_BOOLEAN},
-    {"verbose",OPTION_BOOLEAN},
-    {NULL, 0}
+  /* Structure holding command line options */
+  {"window",OPTION_INT},
+  {"edges",OPTION_INT},
+  {"minq",OPTION_INT},
+  {"help",OPTION_BOOLEAN},
+  {"verbose",OPTION_BOOLEAN},
+  {NULL, 0}
 }; //end options()
 
 
@@ -84,7 +84,7 @@ static struct optionSpec options[] = {
 
 
 int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned short minmq)
-/* iterate through bam alignments, storing */
+  /* iterate through bam alignments, storing */
 {
   int lastTID=-1; //real TIDs are never negative
   bam_header_t *header = bamFile->header;
@@ -105,9 +105,9 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
 
         for(i=0;i<numBuckets;i++)
           fprintf(out, "%s\t%d\t%hu\t%hu\n", name, (window * i) + edges, bucket_counts_to_other[i], bucket_counts[i] );
-        
 
-        
+
+
         //free old buckets
         free(bucket_counts_to_other);
         bucket_counts_to_other = NULL;
@@ -116,7 +116,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
       }
 
       lastTID = b->core.tid;
-      
+
       length = header->target_len[lastTID];
 
       //nothing to see here
@@ -125,10 +125,12 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
         numBuckets = 0;
         continue;
       }
-      
+
+      skipTID = FALSE;
+
       //number of buckets to look at
       numBuckets = (length - (2 * edges) - window) / window;
-      
+
       //calloc should 0 out arrays
       bucket_counts_to_other = (unsigned short *) calloc(numBuckets, sizeof(unsigned short));
       bucket_counts = (unsigned short *) calloc(numBuckets, sizeof(unsigned short));
@@ -155,10 +157,30 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
         bucket_counts_to_other[bucket_idx] += 1;
       }
 
-    }
+    }//end bucket incrementation
 
-    
+
+  }//end loop over reads
+
+  
+  //now that loop is done, take care of last bucket if it is there.
+  if (bucket_counts_to_other != NULL && bucket_counts != NULL){
+    char *name = header->target_name[lastTID];
+
+    for(i=0;i<numBuckets;i++)
+      fprintf(out, "%s\t%d\t%hu\t%hu\n", name, (window * i) + edges, bucket_counts_to_other[i], bucket_counts[i] );
+
+
+
+    //free old buckets
+    free(bucket_counts_to_other);
+    bucket_counts_to_other = NULL;
+    free(bucket_counts);
+    bucket_counts = NULL;
   }
+
+
+
   bam_destroy1(b);
 }
 
@@ -169,7 +191,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
 
 
 int main(int argc, char *argv[])
-/* Process command line. */
+  /* Process command line. */
 {
 
   optionInit(&argc, argv, options);
@@ -187,7 +209,7 @@ int main(int argc, char *argv[])
 
   char *bamFileName;
   samfile_t *bamFile = bamOpen(argv[1],&bamFileName);
-  
+
   bamPrintInfo(bamFile, stdout, edgelen, windowsize, minq);
 
   bamClose(&bamFile);  
