@@ -125,7 +125,7 @@ void setAdd(unsigned *lst, unsigned mtid){
 }
 
 
-inline unsigned ** allocSetLst(int length){
+unsigned ** allocSetLst(int length){
   int i = 0;
   unsigned ** setList = (unsigned **) malloc(length * sizeof(unsigned *));
   for(i=0;i<length;i++){
@@ -133,7 +133,7 @@ inline unsigned ** allocSetLst(int length){
   }
 }
 
-inline void freeSetLst(unsigned **setLst, int length){
+void freeSetLst(unsigned **setLst, int length){
   int i = 0;
   for(i=0;i<length;i++){
     free(setLst[i]);
