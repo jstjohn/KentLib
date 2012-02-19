@@ -150,6 +150,10 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
         && b->core.pos <= length - edges)
     {
       int bucket_idx = (b->core.pos - edges) / window;
+      
+      if(bucket_idx >= numBuckets)
+        continue;
+
       bucket_counts[bucket_idx] += 1;
 
       if(b->core.mtid != b->core.tid){
