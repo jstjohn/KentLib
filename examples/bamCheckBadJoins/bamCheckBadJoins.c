@@ -95,13 +95,13 @@ int compare_unsigned (const unsigned *a, const unsigned *b)
 void setAdd(unsigned *lst, unsigned mtid){
   if(lst[0] >= 1){
     //search after the first element of the list for mtid
-    unsigned *rlst = bsearch(mtid, lst+1, lst[0], sizeof(unsigned), compare_unsigned );
+    unsigned *rlst = bsearch(&mtid, lst+1, lst[0], sizeof(unsigned), compare_unsigned );
     if(rlst == NULL && lst[0] < MAX_OCOUNT_LEN){
       //insert the new element into the list at the current end of the list
       lst[lst[0]+1] = mtid;
       lst[0]++;
       //now re-sort the list after the first element
-      qsort(lst+1, lst[0], sizeof(unsigned), compare_unsigned);
+      qsort(lst+1, lst[0], sizeof(unsigned), compare_unsigned );
 
     }
   }else{ //base case
@@ -208,7 +208,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
         bucket_counts_to_other[bucket_idx]++;
 
         //add this mtid to the set of mtids for this bucket
-        setAdd(bucket_num_other[bucket_idx], mtid);
+        setAdd(bucket_num_other[bucket_idx], b->core.mtid);
 
       }
 
