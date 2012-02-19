@@ -93,7 +93,7 @@ int compare_unsigned (const unsigned *a, const unsigned *b)
 }
 
 void setAdd(unsigned *lst, unsigned mtid){
-  if(lst[0] >= 1){
+  if(lst[0] > 1){
     //search after the first element of the list for mtid
     unsigned *rlst = bsearch(&mtid, lst+1, lst[0], sizeof(unsigned), compare_unsigned );
     if(rlst == NULL && lst[0] < MAX_OCOUNT_LEN){
@@ -105,8 +105,22 @@ void setAdd(unsigned *lst, unsigned mtid){
 
     }
   }else{ //base case
-    lst[1] = mtid;
-    lst[0] = 1;
+    if (lst[0] == 0){
+      lst[1] = mtid;
+      lst[0] = 1;
+    }else{ //exactly one element
+      if(mtid != lst[1]){
+        if(mtid < lst[1]){
+          unsigned tmp = lst[1];
+          lst[1] = mtid;
+          lst[2] = tmp;
+        }else{
+          lst[2] = mtid;
+        }
+        lst[0]++;
+      }
+    }
+
   }
 }
 
@@ -223,8 +237,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
     char *name = header->target_name[lastTID];
 
     for(i=0;i<numBuckets;i++)
-      fprintf(out, "%s\t%d\t%hu\t%hu\n", name, (window * i) + edges, bucket_counts_to_other[i], bucket_counts[i] );
-
+     fprintf(out, "%s\t%d\t%hu\t%u\t%hu\n", name, (window * i) + edges, bucket_counts_to_other[i], bucket_num_other[i][0], bucket_counts[i] );
 
 
     //free old buckets
@@ -232,6 +245,9 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
     bucket_counts_to_other = NULL;
     free(bucket_counts);
     bucket_counts = NULL;
+    freeSetLst(bucket_num_other, numBuckets);
+    bucket_num_other = NULL;
+
   }
 
 
