@@ -91,7 +91,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
   unsigned short *bucket_counts_to_other = NULL;
   unsigned short *bucket_counts = NULL;
   boolean skipTID = TRUE;
-  unsigned int numBuckets = 0;
+  int numBuckets = 0;
   unsigned length = 0;
   int i;
 
@@ -120,7 +120,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
       length = header->target_len[lastTID];
 
       //nothing to see here
-      if(length < 2 * edges){
+      if(length < (2 * edges + window)){
         skipTID = TRUE;
         numBuckets = 0;
         continue;
