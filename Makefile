@@ -1,7 +1,7 @@
 CC=gcc
 MACHTYPE=x86_64
-LDFLAGS=
-CFLAGS=-c -fPIC -Wall -Iinc -DMACHTYPE_$(MACHTYPE)
+LDFLAGS=-Lthirdparty/samtools -lbam
+CFLAGS=-c -fPIC -Wall -Iinc -Ithirdparty/samtools -DUSE_BAM=1 -DMACHTYPE_$(MACHTYPE)
 LIBDIR=lib
 INCDIR=inc
 SOURCES=$(shell find $(LIBDIR) -type f -name '*.c')
@@ -11,7 +11,12 @@ LIBOUT=libkent.a
 LEGACYOUT=jkweb.a
 SHAREDOUT=libkent.so
 
-all: $(SOURCES) $(LIBOUT) $(HEADERS)
+all: $(SOURCES) $(LIBOUT) $(HEADERS) THIRDPARTY
+
+THIRDPARTY: thirdparty/samtools/libbam.a
+
+thirdparty/samtools/libbam.a:
+	pushd thirdparty/samtools && make && popd
 
 $(LIBOUT): $(OBJECTS)
 	ar rcus $(LIBOUT) $(OBJECTS)
@@ -23,6 +28,7 @@ $(OBJECTS): $(HEADERS)
 	$(CC) $(CFLAGS) $< -o $@
 clean:
 	-rm $(OBJECTS) $(LIBOUT) ${LEGACYOUT}
+	pushd thirdparty/samtools && make clean && popd
 
 #not working yet
 shared: ${LIBOUT}

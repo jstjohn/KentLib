@@ -4,5 +4,13 @@
 *.out
 *.dll
 *.tmp
+.svn
+*.bam
+*.sam
+*.gz
+*.fq
+*.fastq
+*.fa
+*.fasta
 .cproject
 .project
