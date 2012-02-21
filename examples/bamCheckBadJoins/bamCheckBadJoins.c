@@ -45,7 +45,7 @@ void usage()
   /* Explain usage and exit. */
 {
   errAbort(
-      "bamCheckBadJoins -- check for support of different contig joins within scaffolds, reports summary.\n"
+      "bamCheckBadJoins -- WARNING: CURRENTLY HAS BUGS, USE V2: check for support of different contig joins within scaffolds, reports summary.\n"
       "\tUsage: bamCheckBadJoins [options] bamFile.sorted.bam \n"
       "\noptions:\n"
       "\t-window\tthe window size for binning reads (default: 500)\n"
