@@ -100,7 +100,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int ma
       if (bad_range_insert_counts != NULL && discontiguous_insert_counts != NULL && ok_insert_counts != NULL){
         char *name = header->target_name[lastTID];
 
-        for(i=edges;i<length;i++)
+        for(i=edges;i<length-edges;i++)
           fprintf(out, "%s\t%d\t%hu\t%hu\t%hu\n", name, i, bad_range_insert_counts[i], discontiguous_insert_counts[i], ok_insert_counts[i] );
 
 
@@ -176,7 +176,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int ma
   if (bad_range_insert_counts != NULL && discontiguous_insert_counts != NULL && ok_insert_counts != NULL){
     char *name = header->target_name[lastTID];
 
-    for(i=edges;i<length;i++)
+    for(i=edges;i<length-edges;i++)
       fprintf(out, "%s\t%d\t%hu\t%hu\t%hu\n", name, i, bad_range_insert_counts[i], discontiguous_insert_counts[i], ok_insert_counts[i] );
 
 
