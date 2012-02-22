@@ -113,6 +113,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int avgInsert, int mi
   int alnlen;
 
   bam1_t *b = bam_init1();
+  fprintf(out, "#seq_name\tposition(0-based)\tisize_out_of_range\tdiscontiguous_in_avg_insert_window\tok_looking_inserts\n");
   while(samread(bamFile, b)>=0){
     if(b->core.tid != lastTID){
       //we have an alignment to something
