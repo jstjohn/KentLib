@@ -79,7 +79,7 @@ static struct optionSpec options[] = {
  */
 
 
-int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int maxInsert, int minmq)
+int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int maxInsert, int minmq, boolean verbose)
   /* iterate through bam alignments, storing */
 {
   int lastTID=-1; //real TIDs are never negative
@@ -150,16 +150,18 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int ma
         }
       }
       //case 2: the mate aligns to the same chromosome, and we only consider one read, the one where pos >= mpos
-      else if ((!(b->core.flag & BAM_FMUNMAP)) && (b->core.tid == b->core.mtid) && (b->core.pos >= b->core.mpos)){
+      else if ((!(b->core.flag & BAM_FMUNMAP)) && (b->core.tid == b->core.mtid) && (b->core.flag & BAM_FREAD1)){
         int absIsize = abs(b->core.isize);
+        int start = min(b->core.pos, b->core.mpos);
+        int end = max(b->core.pos, b->core.mpos);
         //case 2a: the mate aligns outside of the expected range
         if(absIsize < minInsert || absIsize > maxInsert){
-          for(i = b->core.pos; i <= b->core.mpos; i++)
+          for(i = start; i <= end; i++)
             bad_range_insert_counts[i]++;
         }
         //case 2b: the mate aligns nicely within the expected range
         else{
-          for(i = b->core.pos; i <= b->core.mpos; i++)
+          for(i = start; i <= end; i++)
             ok_insert_counts[i]++;
         }
       }
