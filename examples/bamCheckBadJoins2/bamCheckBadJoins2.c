@@ -35,6 +35,7 @@
 #define MAX_OCOUNT_LEN 301
 #define DEFAULT_MIN_INSERT 10
 #define DEFAULT_MAX_INSERT 5000
+#define DEFAULT_AVG_INSERT 1650
 
 
 /**
@@ -48,7 +49,8 @@ void usage()
       "bamCheckBadJoins2 -- make list of per-base regions of unexpected mate-pair insert sizes.\n"
       "Usage: bamCheckBadJoins2 [options] bamFile.sorted.bam \n"
       "\noptions:\n"
-      "\t-minInsert\tread pairs with inserts less than this value are marked as bad (default: 10)\n"
+      "\t-avgInsert\tlibrary has this approximate average insert size(default: 1650)\n"
+      "\t-minInsert\tread pairs with inserts less than this value are marked as bad (default: 100)\n"
       "\t-maxInsert\tread pairs with inserts greater than this value are marked as bad (default: 5000)\n"
       "\t-edges\tskip this many bases at beginning and end of scaffolds (default: 4000)\n"
       "\t-minq\tonly consider alignments where the left read has at least a mapq of (default: 30)\n"
@@ -62,6 +64,7 @@ static struct optionSpec options[] = {
   /* Structure holding command line options */
   {"minInsert",OPTION_INT},
   {"maxInsert",OPTION_INT},
+  {"avgInsert",OPTION_INT},
   {"edges",OPTION_INT},
   {"minq",OPTION_INT},
   {"help",OPTION_BOOLEAN},
@@ -69,7 +72,23 @@ static struct optionSpec options[] = {
   {NULL, 0}
 }; //end options()
 
+inline unsigned short mysumfunc(unsigned short *lst, int start, int end){
+  unsigned short out = 0;
+  int i;
+  for(i=start;i<end;i++){
+    out += lst[i];
+  }
+  return out;
+}
 
+inline void makeWindows(int winlen, int len, unsigned short *point_counts, unsigned short *window_counts){
+  int i;
+  int winsum = mysumfunc(point_counts,0,winlen);
+  window_counts[winlen/2] = winsum;
+  for(i=(winlen/2)+1;i<len-(winlen/2);i++){
+    window_counts[i] = window_counts[i-1] + point_counts[i+(winlen/2)] - point_counts[i-(winlen/2)-1];
+  }
+}
 
 
 
@@ -79,7 +98,7 @@ static struct optionSpec options[] = {
  */
 
 
-int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int maxInsert, int minmq, boolean verbose)
+int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int avgInsert, int minInsert, int maxInsert, int minmq, boolean verbose)
   /* iterate through bam alignments, storing */
 {
   int lastTID=-1; //real TIDs are never negative
@@ -87,6 +106,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int ma
   unsigned short *bad_range_insert_counts = NULL;
   unsigned short *discontiguous_insert_counts = NULL; //other or unmapped
   unsigned short *ok_insert_counts = NULL;
+  unsigned short *window_discontiguous_insert_counts = NULL;
   boolean skipTID = TRUE;
   int length = 0;
   int i;
@@ -100,8 +120,10 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int ma
       if (bad_range_insert_counts != NULL && discontiguous_insert_counts != NULL && ok_insert_counts != NULL){
         char *name = header->target_name[lastTID];
 
+        makeWindows(avgInsert, length, discontiguous_insert_counts, window_discontiguous_insert_counts);
+
         for(i=edges;i<length-edges;i++)
-          fprintf(out, "%s\t%d\t%hu\t%hu\t%hu\n", name, i, bad_range_insert_counts[i], discontiguous_insert_counts[i], ok_insert_counts[i] );
+          fprintf(out, "%s\t%d\t%hu\t%hu\t%hu\n", name, i, bad_range_insert_counts[i], window_discontiguous_insert_counts[i], ok_insert_counts[i] );
 
 
 
@@ -112,6 +134,8 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int ma
         discontiguous_insert_counts = NULL;
         free(ok_insert_counts);
         ok_insert_counts = NULL;
+        free(window_discontiguous_insert_counts);
+        window_discontiguous_insert_counts = NULL;
 
       }
 
@@ -131,6 +155,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int ma
       bad_range_insert_counts = (unsigned short *) calloc(length, sizeof(unsigned short));
       discontiguous_insert_counts = (unsigned short *) calloc(length, sizeof(unsigned short));
       ok_insert_counts = (unsigned short *) calloc(length, sizeof(unsigned short));
+      window_discontiguous_insert_counts = (unsigned short *) calloc(length, sizeof(unsigned short));
    
     }
     if(skipTID == TRUE)
@@ -144,10 +169,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int minInsert, int ma
       //deal with things
       //case 1: the mate doesn't align or the mate aligns to a different chromosome
       if((b->core.flag & BAM_FMUNMAP) || ((!(b->core.flag & BAM_FMUNMAP)) && b->core.tid != b->core.mtid && b->core.mtid != -1)){
-        alnlen = bamGetTargetLength(b);
-        for(i=b->core.pos;i<b->core.pos+alnlen;i++){
-          discontiguous_insert_counts[i]++;
-        }
+        discontiguous_insert_counts[b->core.pos]++;
       }
       //case 2: the mate aligns to the same chromosome, and we only consider one read, the one where pos >= mpos
       else if ((!(b->core.flag & BAM_FMUNMAP)) && (b->core.tid == b->core.mtid) && (b->core.flag & BAM_FREAD1)){
@@ -220,12 +242,13 @@ int main(int argc, char *argv[])
   int maxInsert = optionInt("maxInsert",DEFAULT_MAX_INSERT);
   int minInsert = optionInt("minInsert",DEFAULT_MIN_INSERT);
   int edgelen = optionInt("edges",DEFAULT_EDGES);
+  int avgInsert = optionInt("avgInsert",DEFAULT_AVG_INSERT);
   int minq = optionInt("minq",DEFAULT_MQ);
 
   char *bamFileName;
   samfile_t *bamFile = bamOpen(argv[1],&bamFileName);
 
-  bamPrintInfo(bamFile, stdout, edgelen, minInsert, maxInsert, minq, verbose);
+  bamPrintInfo(bamFile, stdout, edgelen, avgInsert, minInsert, maxInsert, minq, verbose);
 
   bamClose(&bamFile);
 
