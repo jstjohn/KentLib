@@ -156,7 +156,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int window, unsigned 
   int i;
 
   bam1_t *b = bam_init1();
-  while(bam_read1(bamFile->x.bam,b)){
+  while(samread(bamFile,b)>=0){
     if(b->core.tid != lastTID){
       //we have an alignment to something
       //new
