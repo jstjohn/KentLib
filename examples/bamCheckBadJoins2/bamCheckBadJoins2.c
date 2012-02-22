@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
   char *bamFileName;
   samfile_t *bamFile = bamOpen(argv[1],&bamFileName);
 
-  bamPrintInfo(bamFile, stdout, edgelen, minInsert, maxInsert, minq);
+  bamPrintInfo(bamFile, stdout, edgelen, minInsert, maxInsert, minq, verbose);
 
   bamClose(&bamFile);
 
