@@ -4,6 +4,7 @@
 *.out
 *.dll
 *.tmp
+*.swp
 .svn
 *.bam
 *.sam
