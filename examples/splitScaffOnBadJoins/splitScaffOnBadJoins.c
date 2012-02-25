@@ -49,7 +49,7 @@ struct chrom_to_begin_end_lst{
 };
 
 
-
+struct chrom_to_begin_end_lst *chromToBeginEndLstDict = NULL;
 
 
 
@@ -91,17 +91,16 @@ static struct optionSpec options[] = {
  *
  */
 
-void addAndOrCreateToBegEndLstDict(struct chrom_to_begin_end_lst *dict,
-    char *chrom, int begin, int end){
-  struct chrom_to_begin_end_lst *s = NULL;
-  HASH_FIND_STR(dict, chrom, s);
+void addAndOrCreateToBegEndLstDict(char *chrom, int begin, int end){
+  struct chrom_to_begin_end_lst *s;
+  HASH_FIND_STR(chromToBeginEndLstDict, chrom, s);
   if(s == NULL){
     s = (struct chrom_to_begin_end_lst *) malloc(sizeof(struct chrom_to_begin_end_lst));
     strcpy(s->name, chrom);
     s->head = (struct begin_end_lst *)malloc(sizeof(struct begin_end_lst));
     s->tail = s->head; //only one element
     s->tail->next = NULL;
-    HASH_ADD_STR(dict, name, s);//add this item to the hashtable
+    HASH_ADD_STR(chromToBeginEndLstDict, name, s);//add this item to the hashtable
   }else{
     s->tail->next = (struct begin_end_lst *)malloc(sizeof(struct begin_end_lst));
     s->tail = s->tail->next;
@@ -112,14 +111,14 @@ void addAndOrCreateToBegEndLstDict(struct chrom_to_begin_end_lst *dict,
 }
 
 
-struct chrom_to_begin_end_lst * parseBegEndLstFile(char *chromBegEndLstFile){
+void parseBegEndLstFile(char *chromBegEndLstFile){
   struct lineFile *lf = lineFileOpen(chromBegEndLstFile,TRUE);
   char lastChrom[MAX_NAME_LEN]; 
   strcpy(lastChrom,"NoTAcHrOmNaMe__223");
   char *line;
   int lastPos = -1;
   int lastStart = -1;
-  struct chrom_to_begin_end_lst *chromToBegEndLst = NULL;
+
 
   while(lineFileNextReal(lf,&line)){
     char *split[3];
@@ -129,8 +128,7 @@ struct chrom_to_begin_end_lst * parseBegEndLstFile(char *chromBegEndLstFile){
     if(strcmp(chrom,lastChrom) != 0){
       if(lastPos != -1 && lastStart != -1){
         //need to add this to the dict
-        addAndOrCreateToBegEndLstDict(chromToBegEndLst,
-            lastChrom, lastStart, lastPos +1);  
+        addAndOrCreateToBegEndLstDict(lastChrom, lastStart, lastPos +1);  
       }
       //set the last chrom to this chrom
       strcpy(lastChrom, chrom);
@@ -138,8 +136,7 @@ struct chrom_to_begin_end_lst * parseBegEndLstFile(char *chromBegEndLstFile){
     }else{
       //same sid
       if(abs(pos - lastPos) > MAX_SAME_RANGE){
-        addAndOrCreateToBegEndLstDict(chromToBegEndLst,
-            lastChrom, lastStart, lastPos +1);
+        addAndOrCreateToBegEndLstDict(lastChrom, lastStart, lastPos +1);
         lastStart = pos;
       }
     }
@@ -149,28 +146,22 @@ struct chrom_to_begin_end_lst * parseBegEndLstFile(char *chromBegEndLstFile){
   }//end loop over lines
   //take care of last range, if it exists
   if(lastPos != -1 && lastStart != -1){
-    addAndOrCreateToBegEndLstDict(chromToBegEndLst,
-        lastChrom, lastStart, lastPos +1);
+    addAndOrCreateToBegEndLstDict(lastChrom, lastStart, lastPos +1);
   }
-
-  return chromToBegEndLst;
-
 }
 
 
-void splitFaOnNsInBeginEndRegions(
-    struct chrom_to_begin_end_lst *chromBegEndLstDict,
-    char *faFile){
+void splitFaOnNsInBeginEndRegions(char *faFile){
   struct lineFile *lf = lineFileOpen(faFile,TRUE);
   DNA *seq;
   int seqLen , i = 0;
   char *seqName;
-  struct chrom_to_begin_end_lst *s = NULL;
+  struct chrom_to_begin_end_lst *s;
   char tmpName[MAX_NAME_LEN+10];
 
   while(faSpeedReadNext(lf, &seq, &seqLen, &seqName)){
 
-    HASH_FIND_STR(chromBegEndLstDict, seqName, s);
+    HASH_FIND_STR(chromToBeginEndLstDict, seqName, s);
 
     //case 1: there aren't any splits
     if(s == NULL)
@@ -240,8 +231,8 @@ int main(int argc, char *argv[])
   if(help) usage();
   if(argc != 3) usage();
   
-  struct chrom_to_begin_end_lst *chromBegEndLstDict =  parseBegEndLstFile(argv[2]);
-  splitFaOnNsInBeginEndRegions(chromBegEndLstDict, argv[1]);
+  parseBegEndLstFile(argv[2]);
+  splitFaOnNsInBeginEndRegions(argv[1]);
   //WARNING, if we do anything else the above has memory leaks. OK since program is
   //now done though.
   
