@@ -18,9 +18,11 @@
 #include "common.h"
 #include "options.h"
 #include "linefile.h"
-#include "uthash.h"
 #include "fa.h"
 #include <math.h>
+
+#include "uthash.h"
+
 
 
 
