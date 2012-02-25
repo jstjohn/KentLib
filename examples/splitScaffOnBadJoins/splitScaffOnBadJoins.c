@@ -126,7 +126,7 @@ void parseBegEndLstFile(char *chromBegEndLstFile){
     int pos = atoi(split[1]);
     char *chrom = split[0];
     if(strcmp(chrom,lastChrom) != 0){
-      if(lastPos != -1 && lastStart != -1){
+      if(lastPos != -1 && lastStart != -1 && lastPos+1 > lastStart){
         //need to add this to the dict
         addAndOrCreateToBegEndLstDict(lastChrom, lastStart, lastPos +1);  
       }
@@ -135,7 +135,7 @@ void parseBegEndLstFile(char *chromBegEndLstFile){
       lastStart = pos;
     }else{
       //same sid
-      if(abs(pos - lastPos) > MAX_SAME_RANGE){
+      if(abs(pos - lastPos) > MAX_SAME_RANGE && lastPos+1 > lastStart){
         addAndOrCreateToBegEndLstDict(lastChrom, lastStart, lastPos +1);
         lastStart = pos;
       }
@@ -145,7 +145,7 @@ void parseBegEndLstFile(char *chromBegEndLstFile){
 
   }//end loop over lines
   //take care of last range, if it exists
-  if(lastPos != -1 && lastStart != -1){
+  if(lastPos != -1 && lastStart != -1 && lastPos+1 > lastStart){
     addAndOrCreateToBegEndLstDict(lastChrom, lastStart, lastPos +1);
   }
 }
@@ -160,7 +160,7 @@ void splitFaOnNsInBeginEndRegions(char *faFile){
   char tmpName[MAX_NAME_LEN+10];
 
   while(faSpeedReadNext(lf, &seq, &seqLen, &seqName)){
-
+    s = NULL; //double check s points to nothing
     HASH_FIND_STR(chromToBeginEndLstDict, seqName, s);
 
     //case 1: there aren't any splits
@@ -205,13 +205,14 @@ void splitFaOnNsInBeginEndRegions(char *faFile){
       int count = 0;
       int start;
       for(start = 0; start < seqLen; start++){
-        if((! seq[i] == '\0') && toupper(seq[i]) != 'N' ){
+        if((! seq[start] == '\0') && toupper(seq[start]) != 'N' ){
           int length = strlen(seq+start); //finds length until next '\0' char
           if(length >= MIN_SEQ_LEN){
             sprintf(tmpName,"%s_%d",seqName,++count);
             faWriteNext(stdout, tmpName, seq+start, length);
           }
-          start += length-1; //incrememted by one by the loop
+          if(length > 0)
+            start += length-1; //incrememted by one by the loop
         }
       }//end loop over seq for printing
     }//end deal with breaks
