@@ -99,6 +99,7 @@ void addAndOrCreateToBegEndLstDict(struct chrom_to_begin_end_lst *dict,
     s->head = (struct begin_end_lst *)malloc(sizeof(struct begin_end_lst));
     s->tail = s->head; //only one element
     s->tail->next = NULL;
+    HASH_ADD_STR(dict, chrom, s);//add this item to the hashtable
   }else{
     s->tail->next = (struct begin_end_lst *)malloc(sizeof(struct begin_end_lst));
     s->tail = s->tail->next;
