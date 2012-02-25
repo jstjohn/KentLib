@@ -42,7 +42,7 @@ struct begin_end_lst{
 };
 
 struct chrom_to_begin_end_lst{
-  char chrom[MAX_NAME_LEN];
+  char name[MAX_NAME_LEN];
   struct begin_end_lst *head;
   struct begin_end_lst *tail;
   UT_hash_handle hh;
@@ -97,11 +97,11 @@ void addAndOrCreateToBegEndLstDict(struct chrom_to_begin_end_lst *dict,
   HASH_FIND_STR(dict, chrom, s);
   if(s == NULL){
     s = (struct chrom_to_begin_end_lst *) malloc(sizeof(struct chrom_to_begin_end_lst));
-    strcpy(s->chrom, chrom);
+    strcpy(s->name, chrom);
     s->head = (struct begin_end_lst *)malloc(sizeof(struct begin_end_lst));
     s->tail = s->head; //only one element
     s->tail->next = NULL;
-    HASH_ADD_STR(dict, chrom, s);//add this item to the hashtable
+    HASH_ADD_STR(dict, name, s);//add this item to the hashtable
   }else{
     s->tail->next = (struct begin_end_lst *)malloc(sizeof(struct begin_end_lst));
     s->tail = s->tail->next;
