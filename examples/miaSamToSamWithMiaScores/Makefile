@@ -2,7 +2,7 @@ include ../include.mk
 DESTDIR=$(HOME)/
 BINDIR=bin
 CC=gcc
-A=mafSamToSamWithMafScores
+A=miaSamToSamWithMiaScores
 O=$(patsubst %.c,%.o,$(wildcard *.c))
 SOURCES=$(wildcard *.c)
 
