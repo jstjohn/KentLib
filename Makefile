@@ -16,7 +16,7 @@ all: $(SOURCES) $(LIBOUT) $(HEADERS) THIRDPARTY
 THIRDPARTY: thirdparty/samtools/libbam.a
 
 thirdparty/samtools/libbam.a:
-	pushd thirdparty/samtools && make && popd
+	cd thirdparty/samtools && make && cd ../..
 
 $(LIBOUT): $(OBJECTS)
 	ar rcus $(LIBOUT) $(OBJECTS)
@@ -28,7 +28,7 @@ $(OBJECTS): $(HEADERS)
 	$(CC) $(CFLAGS) $< -o $@
 clean:
 	-rm $(OBJECTS) $(LIBOUT) ${LEGACYOUT}
-	pushd thirdparty/samtools && make clean && popd
+	cd thirdparty/samtools && make clean && cd ../..
 
 #not working yet
 shared: ${LIBOUT}
