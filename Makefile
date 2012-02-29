@@ -1,6 +1,6 @@
 CC=gcc
 MACHTYPE=x86_64
-LDFLAGS=-Lthirdparty/samtools -lbam
+LDFLAGS=-Lthirdparty/samtools -lbam -pthread
 CFLAGS=-c -fPIC -Wall -Iinc -Ithirdparty/samtools -DUSE_BAM=1 -DMACHTYPE_$(MACHTYPE)
 LIBDIR=lib
 INCDIR=inc
