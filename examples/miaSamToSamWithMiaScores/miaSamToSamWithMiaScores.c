@@ -96,13 +96,13 @@ inline unsigned short base2inx(const char base) {
 
 
 
-void addAlignScoreToBamAux(samfile_t *bamFileIn, samfile_t *bamFileOut, PSSMP fpssmp, PSSMP rpssmp, struct hash* dnaHash){
+void addAlignScoreToBamAux(samfile_t *bamFileIn, samfile_t *bamFileOut, int sm[2*PSSM_DEPTH+1][5][5], int rsm[2*PSSM_DEPTH+1][5][5], struct hash* dnaHash){
 
   bam_header_t *header = bamFileIn->header;
   bam1_t *b;
   bam1_core_t *c;
   unsigned int *cigar;
-  int ***currPSSMP;
+  int (*currPSSMP)[5][5];
   uint8_t *packedQSeq;
   int lastTID = -272823; //this number should never happen
   struct dnaSeq *refSeq = NULL;
@@ -129,9 +129,9 @@ void addAlignScoreToBamAux(samfile_t *bamFileIn, samfile_t *bamFileOut, PSSMP fp
 
     //Determine if we should use forward or reverse PSSMP
     if(c->flag & BAM_FREVERSE){
-      currPSSMP = (int ***)(rpssmp->sm);
+      currPSSMP = sm;
     }else{
-      currPSSMP = (int ***)(fpssmp->sm);
+      currPSSMP = rsm;
     }
 
     packedQSeq = bam1_seq(b);
@@ -202,6 +202,9 @@ void addAlignScoreToBamAux(samfile_t *bamFileIn, samfile_t *bamFileOut, PSSMP fp
     //now we need to add the alignment score onto the bam aux data
     // AS:i:[alnScore]
     //see bam_aux_append usage in ../../thirdparty/samtools/bam_md.c
+    uint8_t *old_as = bam_aux_get(b,"AS");
+    if(old_as)
+        bam_aux_del(b,old_as);
     bam_aux_append(b,"AS",'i',bamAuxAppendIntSize,(uint8_t*)&alnScore);
     //8*4=32=sizeof int, that's why heng li passes 4 as the len of the
     //aux data (after the tags). I tried to clarify the reasoning behind this
@@ -229,29 +232,32 @@ int main(int argc, char *argv[])
   PSSMP rpssmp = revcom_submat(fpssmp);
 
 
-  samfile_t *bamFileIn;
-  samfile_t *bamFileOut;
+  samfile_t *bamFileIn = 0;
+  samfile_t *bamFileOut = 0;
   char *inf = argv[3];
   int inlen = strlen(inf);
   char *outf = argv[4];
   int outlen = strlen(outf);
-
   if(inlen < 3 || toupper(inf[inlen-3]) == 'S'){
     bamFileIn = samopen(inf,"r",refLst);
   }else{
     bamFileIn = samopen(inf,"rb",refLst);
   }
+  if(bamFileIn->header == 0){
+    fprintf(stderr,"Failed to read the bam header from \"%s\" or from \"%s\"\n",inf,refLst? refLst: "-fai=NONE");
+    return 1;
+  }
   if(outlen < 3 || toupper(outf[outlen-3]) == 'S'){
-    samfile_t *bamFileOut = samopen(outf,"w",refLst);
+    bamFileOut = samopen(outf,"w",bamFileIn->header);
   }else{
-    samfile_t *bamFileOut = samopen(outf,"wb",refLst);
+    bamFileOut = samopen(outf,"wb",bamFileIn->header);
   }
   //load our reference genome
   struct dnaSeq *refList = dnaLoadAll(argv[2]);
   struct hash *refListHash = dnaSeqHash(refList);
 
   //do the things here
-  addAlignScoreToBamAux(bamFileIn, bamFileOut, fpssmp, rpssmp, refListHash);
+  addAlignScoreToBamAux(bamFileIn, bamFileOut, fpssmp->sm, rpssmp->sm, refListHash);
 
 
   samclose(bamFileIn);
