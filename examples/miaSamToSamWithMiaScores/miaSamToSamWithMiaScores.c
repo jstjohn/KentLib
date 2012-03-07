@@ -113,7 +113,7 @@ void addAlignScoreToBamAux(samfile_t *bamFileIn, samfile_t *bamFileOut, PSSMP fp
   c = &b->core;
 
   while(samread(bamFileIn, b)>=0){
-    if(c->tid < 0 || c->flag & BAM_FUNMAP)
+    if(c->tid < 0 || (c->flag & BAM_FUNMAP))
       continue; //skip unmapped reads
 
 
