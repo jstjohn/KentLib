@@ -129,9 +129,9 @@ void addAlignScoreToBamAux(samfile_t *bamFileIn, samfile_t *bamFileOut, int sm[2
 
     //Determine if we should use forward or reverse PSSMP
     if(c->flag & BAM_FREVERSE){
-      currPSSMP = sm;
-    }else{
       currPSSMP = rsm;
+    }else{
+      currPSSMP = sm;
     }
 
     packedQSeq = bam1_seq(b);
