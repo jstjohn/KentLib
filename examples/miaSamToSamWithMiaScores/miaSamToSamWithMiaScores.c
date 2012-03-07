@@ -229,8 +229,8 @@ int main(int argc, char *argv[])
   PSSMP rpssmp = revcom_submat(fpssmp);
 
 
-  samfile_t *bamFileIn;
-  samfile_t *bamFileOut;
+  samfile_t *bamFileIn = 0;
+  samfile_t *bamFileOut = 0;
   char *inf = argv[3];
   int inlen = strlen(inf);
   char *outf = argv[4];
