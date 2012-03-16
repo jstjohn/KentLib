@@ -139,8 +139,7 @@ void addAlignScoreToBamAux(samfile_t *bamFileIn, samfile_t *bamFileOut, int sm[2
     int i,k,l,op,end;
     unsigned int tpos = c->pos;
     k = 0;
-    op = cigar[k] & BAM_CIGAR_MASK;
-    l = cigar[k] >> BAM_CIGAR_SHIFT;
+
     cigar = bam1_cigar(b);
     i = 0;
     int seqlen = c->l_qseq;
