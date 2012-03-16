@@ -24,3 +24,5 @@ thirdparty/samtools/misc/md5sum-lite
 thirdparty/samtools/misc/seqtk
 thirdparty/samtools/misc/wgsim
 thirdparty/samtools/samtools
+thirdparty/samtools/misc/maq2sam-short.dSYM/
+thirdparty/samtools/misc/maq2sam-long.dSYM/
