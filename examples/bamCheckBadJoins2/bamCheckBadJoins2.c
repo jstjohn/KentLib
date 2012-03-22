@@ -83,6 +83,7 @@ inline unsigned short mysumfunc(unsigned short *lst, int start, int end){
 
 inline void makeWindows(int winlen, int len, unsigned short *point_counts, unsigned short *window_counts){
   int i;
+  winlen = min(len,winlen);
   int winsum = mysumfunc(point_counts,0,winlen);
   window_counts[winlen/2] = winsum;
   for(i=(winlen/2)+1;i<len-(winlen/2);i++){
@@ -145,7 +146,7 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int avgInsert, int m
       length = header->target_len[lastTID];
 
       //nothing to see here
-      if(length <= (2 * edges)){
+      if(length <= min((2 * edges),avgInsert)){
         skipTID = TRUE;
         continue;
       }
