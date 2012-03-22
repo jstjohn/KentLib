@@ -159,7 +159,7 @@ void splitFaOnNsInBeginEndRegions(char *faFile){
   struct chrom_to_begin_end_lst *s;
   char tmpName[MAX_NAME_LEN+10];
 
-  while(faSpeedReadNext(lf, &seq, &seqLen, &seqName)){
+  while(faMixedSpeedReadNext(lf, &seq, &seqLen, &seqName)){
     s = NULL; //double check s points to nothing
     HASH_FIND_STR(chromToBeginEndLstDict, seqName, s);
 
@@ -205,7 +205,7 @@ void splitFaOnNsInBeginEndRegions(char *faFile){
       int count = 0;
       int start;
       for(start = 0; start < seqLen; start++){
-        if((! seq[start] == '\0') && toupper(seq[start]) != 'N' ){
+        if(seq[start] != '\0' && toupper(seq[start]) != 'N' ){
           int length = strlen(seq+start); //finds length until next '\0' char
           if(length >= MIN_SEQ_LEN){
             sprintf(tmpName,"%s_%d",seqName,++count);

@@ -78,11 +78,12 @@ inline unsigned short mysumfunc(unsigned short *lst, int start, int end){
   for(i=start;i<end;i++){
     out += lst[i];
   }
-  return out;
+  return(out);
 }
 
 inline void makeWindows(int winlen, int len, unsigned short *point_counts, unsigned short *window_counts){
   int i;
+  winlen = min(len,winlen);
   int winsum = mysumfunc(point_counts,0,winlen);
   window_counts[winlen/2] = winsum;
   for(i=(winlen/2)+1;i<len-(winlen/2);i++){
@@ -98,7 +99,7 @@ inline void makeWindows(int winlen, int len, unsigned short *point_counts, unsig
  */
 
 
-int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int avgInsert, int minInsert, int maxInsert, int minmq, boolean verbose)
+void bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int avgInsert, int minInsert, int maxInsert, int minmq, boolean verbose)
   /* iterate through bam alignments, storing */
 {
   int lastTID=-1; //real TIDs are never negative
@@ -145,7 +146,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int avgInsert, int mi
       length = header->target_len[lastTID];
 
       //nothing to see here
-      if(length <= (2 * edges)){
+      if(length <= min((2 * edges),avgInsert)){
         skipTID = TRUE;
         continue;
       }
@@ -178,7 +179,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int avgInsert, int mi
         int start = min(b->core.pos, b->core.mpos);
         int end = max(b->core.pos, b->core.mpos);
         //case 2a: the mate aligns outside of the expected range
-        if(absIsize < minInsert || absIsize > maxInsert){
+        if((absIsize < minInsert) || (absIsize > maxInsert)){
           for(i = start; i <= end; i++)
             bad_range_insert_counts[i]++;
         }
@@ -223,6 +224,7 @@ int bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int avgInsert, int mi
 
 
   bam_destroy1(b);
+
 }
 
 

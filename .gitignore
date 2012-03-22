@@ -15,3 +15,14 @@
 *.fasta
 .cproject
 .project
+thirdparty/samtools/misc/maq2sam-long
+thirdparty/samtools/misc/maq2sam-short
+thirdparty/samtools/bcftools/bcftools
+thirdparty/samtools/misc/ace2sam
+thirdparty/samtools/misc/md5fa
+thirdparty/samtools/misc/md5sum-lite
+thirdparty/samtools/misc/seqtk
+thirdparty/samtools/misc/wgsim
+thirdparty/samtools/samtools
+thirdparty/samtools/misc/maq2sam-short.dSYM/
+thirdparty/samtools/misc/maq2sam-long.dSYM/
