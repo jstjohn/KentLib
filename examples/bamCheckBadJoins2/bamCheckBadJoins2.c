@@ -36,6 +36,7 @@
 #define DEFAULT_MIN_INSERT 10
 #define DEFAULT_MAX_INSERT 5000
 #define DEFAULT_AVG_INSERT 1650
+#define MAX_COUNT (1000)
 
 
 /**
@@ -87,7 +88,7 @@ inline void makeWindows(int winlen, int len, unsigned short *point_counts, unsig
   int winsum = mysumfunc(point_counts,0,winlen);
   window_counts[winlen/2] = winsum;
   for(i=(winlen/2)+1;i<len-(winlen/2);i++){
-    window_counts[i] = window_counts[i-1] + point_counts[i+(winlen/2)] - point_counts[i-(winlen/2)-1];
+    window_counts[i] = min(window_counts[i-1] + point_counts[i+(winlen/2)] - point_counts[i-(winlen/2)-1], MAX_COUNT);
   }
 }
 
@@ -165,15 +166,14 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int avgInsert, int m
 
 
     //now increment counts of our 
-    if(b->core.qual >= minmq 
-        && !(b->core.flag & BAM_FUNMAP))
+    if(b->core.qual >= minmq)
     { //this read aligns somewhere
       //deal with things
       //case 1: the mate doesn't align or the mate aligns to a different chromosome
       if((b->core.flag & BAM_FMUNMAP) || ((!(b->core.flag & BAM_FMUNMAP)) && b->core.tid != b->core.mtid && b->core.mtid != -1)){
         discontiguous_insert_counts[b->core.pos]++;
       }
-      //case 2: the mate aligns to the same chromosome, and we only consider one read, the one where pos >= mpos
+      //case 2: the mate aligns to the same chromosome, and we only consider one read
       else if ((!(b->core.flag & BAM_FMUNMAP)) && (b->core.tid == b->core.mtid) && (b->core.flag & BAM_FREAD1)){
         int absIsize = abs(b->core.isize);
         int start = min(b->core.pos, b->core.mpos);
@@ -181,12 +181,14 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int edges, int avgInsert, int m
         //case 2a: the mate aligns outside of the expected range
         if((absIsize < minInsert) || (absIsize > maxInsert)){
           for(i = start; i <= end; i++)
-            bad_range_insert_counts[i]++;
+            if(bad_range_insert_counts[i]<MAX_COUNT)
+              bad_range_insert_counts[i]++;
         }
         //case 2b: the mate aligns nicely within the expected range
         else{
           for(i = start; i <= end; i++)
-            ok_insert_counts[i]++;
+            if(ok_insert_counts[i]<MAX_COUNT)
+              ok_insert_counts[i]++;
         }
       }
       
