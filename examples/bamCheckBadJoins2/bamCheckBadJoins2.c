@@ -85,11 +85,15 @@ inline unsigned short mysumfunc(unsigned short *lst, int start, int end){
 inline void makeWindows(int winlen, int len, unsigned short *point_counts, unsigned short *window_counts){
   int i;
   winlen = min(len,winlen);
-  int winsum = mysumfunc(point_counts,0,winlen);
+  int winsum = min(MAX_COUNT,mysumfunc(point_counts,0,winlen));
   window_counts[winlen/2] = winsum;
+  for(i=0;i<winlen/2;i++)
+    window_counts[i] = winsum;
   for(i=(winlen/2)+1;i<len-(winlen/2);i++){
     window_counts[i] = min(window_counts[i-1] + point_counts[i+(winlen/2)] - point_counts[i-(winlen/2)-1], MAX_COUNT);
   }
+  for(i=len-(winlen/2);i<len;i++)
+    window_counts[i] = window_counts[i-1];
 }
 
 
