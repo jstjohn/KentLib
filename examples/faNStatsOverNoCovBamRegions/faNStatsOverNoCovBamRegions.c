@@ -167,7 +167,7 @@ void printChromInfo(FILE *out, char *name, int length, unsigned short *insert_co
         if((thisGapLen < GAP_LEN_TO_CHECK) && (spanningseq == FALSE)){
           gapfreqbylenwithnosupport[thisGapLen]++;
           int j;
-          for(j=i-thisGapLen;j<i+thisGapLen;j++)
+          for(j=i-thisGapLen;j<i;j++)
               fprintf(out, "%s\t%d\n", name, j);
         }
 
