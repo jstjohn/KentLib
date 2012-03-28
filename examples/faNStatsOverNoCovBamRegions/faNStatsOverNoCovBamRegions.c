@@ -50,7 +50,7 @@ void usage()
 {
   errAbort(
       "faNStatsOverNoCovBamRegions -- print list of gaps less than 100 long with no reads in bam file supporting a span.\n"
-      "Usage: faNStatsOverNoCovBamRegions [options] bamFile.sorted.bam \n"
+      "Usage: faNStatsOverNoCovBamRegions [options] bamFile.sorted.bam reference.fa \n"
       "\noptions:\n"
       "\t-minInsert=INT\tread pairs with inserts less than this value aren't considered (default: 10)\n"
       "\t-maxInsert=INT\tread pairs with inserts greater than this value are marked as bad (default: 5000)\n"
@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
   optionInit(&argc, argv, options);
   boolean help = optionExists("help");
   boolean verbose = optionExists("verbose");
-  if(help || argc != 2) usage();
+  if(help || argc != 3) usage();
 
   int maxInsert = optionInt("maxInsert",DEFAULT_MAX_INSERT);
   int minInsert = optionInt("minInsert",DEFAULT_MIN_INSERT);
