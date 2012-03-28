@@ -82,7 +82,8 @@ int addReadCovToCovLst(bam1_t *b, unsigned short *insert_coverage_counts){
   unsigned int *cigar;
   cigar = bam1_cigar(b);
   i = 0;
-  int seqlen = c->l_qseq;
+
+
   for(k=0;k<c->n_cigar;k++){
     op = cigar[k] & BAM_CIGAR_MASK;
     l = cigar[k] >> BAM_CIGAR_SHIFT;
@@ -151,7 +152,6 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, i
   boolean skipTID = TRUE;
   int length = 0;
   int i;
-  int alnlen;
 
   bam1_t *b = bam_init1();
   fprintf(out, "#seq_name\tposition(0-based)\tisize_out_of_range\tdiscontiguous_in_avg_insert_window\tok_looking_inserts\n");
@@ -188,7 +188,7 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, i
 
 
     //now increment counts of our 
-    if(b->core.qual >= minmq && (!b->core.flag & BAM_FUNMAP))
+    if(b->core.qual >= minmq && (0 == (b->core.flag & BAM_FUNMAP)))
     { //this read aligns somewhere
 
       int seqlen = addReadCovToCovLst(b,insert_coverage_counts);
@@ -246,16 +246,17 @@ int main(int argc, char *argv[])
   boolean help = optionExists("help");
   boolean verbose = optionExists("verbose");
   if(help || argc != 2) usage();
-  if(!bamFileExists(argv[1])){
-    fprintf(stderr,"ERROR: Bam file %s could not be found, or bam index not found.\n",argv[1]);
-    usage();
-  }
 
   int maxInsert = optionInt("maxInsert",DEFAULT_MAX_INSERT);
   int minInsert = optionInt("minInsert",DEFAULT_MIN_INSERT);
   int minq = optionInt("minq",DEFAULT_MQ);
 
   samfile_t *bamFile = samopen(argv[1],"rb",NULL);
+  if(!bamFile){
+      fprintf(stderr,"ERROR: Bam file %s could not be opened.\n",argv[1]);
+      usage();
+    }
+
 
   bamPrintInfo(bamFile, stdout, minInsert, maxInsert, minq, verbose);
 
