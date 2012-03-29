@@ -299,6 +299,9 @@ int main(int argc, char *argv[])
     }
   int i;
 
+  FILE *pos_lst_file = fopen(argv[3],"w");
+  FILE *gap_stats_file = fopen(argv[4], "w");//write and/or create
+
   //initialize our gap freq storage
   gapfreqbylenwithnosupport = (unsigned int *) calloc(max_gap, sizeof(unsigned int));
 
@@ -306,21 +309,19 @@ int main(int argc, char *argv[])
   struct dnaSeq *refList = dnaLoadAll(argv[2]);
   struct hash *refListHash = dnaSeqHash(refList);
 
-  FILE *pos_lst_file = fopen(argv[3],"w");
-  FILE *gap_stats_file = fopen(argv[4], "w");//write and/or create
-
   bamPrintInfo(bamFile, pos_lst_file, minInsert, maxInsert, max_gap, minq, refListHash, verbose);
 
   //now print the n stats as comments
-  fprintf(gap_stats_file,"#GapSize\tFrequency");
+  fprintf(gap_stats_file,"#GapSize\tFrequency\n");
   for(i=1;i<maxSeenGap;i++)
-    fprintf(gap_stats_file,"%d\n%u",i,gapfreqbylenwithnosupport[i]);
+    fprintf(gap_stats_file,"%d\t%u\n",i,gapfreqbylenwithnosupport[i]);
 
 
   fclose(pos_lst_file);
   fclose(gap_stats_file);
   samclose(bamFile);
   free(gapfreqbylenwithnosupport);
+  hashFreeWithVals(&refListHash, freeDnaSeq);
 
 
   return(0);
