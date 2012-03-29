@@ -203,12 +203,17 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, i
   fprintf(out, "#seq_name\tposition(0-based)\n");
   while(samread(bamFile, b)>=0)
   {
+    if((b->core.flag & BAM_FUNMAP) == 0)
+      continue; //skip unmapped reads
+
     if(b->core.tid != lastTID){
       //we have an alignment to something
       //new
       if (insert_coverage_counts != NULL){
-        char *name = header->target_name[lastTID];
-        printChromInfo(out, name, length, max_gap, insert_coverage_counts, refListHash);
+        if(lastTID >=0 && lastTID < header->n_targets){
+          char *name = header->target_name[lastTID];
+          printChromInfo(out, name, length, max_gap, insert_coverage_counts, refListHash);
+        }
 
         free(insert_coverage_counts);
         insert_coverage_counts = NULL;
@@ -258,8 +263,10 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, i
   
   //now that loop is done, take care of last bucket if it is there.
   if (insert_coverage_counts != NULL){
-    char *name = header->target_name[lastTID];
-    printChromInfo(out, name, length, max_gap, insert_coverage_counts, refListHash);
+    if(lastTID >=0 && lastTID < header->n_targets){
+      char *name = header->target_name[lastTID];
+      printChromInfo(out, name, length, max_gap, insert_coverage_counts, refListHash);
+    }
 
 
     //free old count structures
