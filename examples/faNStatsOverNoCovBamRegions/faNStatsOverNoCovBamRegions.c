@@ -228,7 +228,7 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, i
 
       int seqlen = addReadCovToCovLst(b,insert_coverage_counts);
 
-      if((!(b->core.flag & BAM_FUNMAP)) && (b->core.tid == b->core.mtid)){
+      if((b->core.flag & BAM_FPAIRED) && (!(b->core.flag & BAM_FUNMAP)) && (b->core.tid == b->core.mtid)){
         //read and mate both map
         int mypos = b->core.pos;
         int opos = b->core.mpos;
