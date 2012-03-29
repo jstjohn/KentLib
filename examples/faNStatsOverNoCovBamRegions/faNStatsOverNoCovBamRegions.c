@@ -306,7 +306,7 @@ int main(int argc, char *argv[])
   struct dnaSeq *refList = dnaLoadAll(argv[2]);
   struct hash *refListHash = dnaSeqHash(refList);
 
-  FILE *pos_lst_file = fopen(argv[3],"r");
+  FILE *pos_lst_file = fopen(argv[3],"w");
   FILE *gap_stats_file = fopen(argv[4], "w");//write and/or create
 
   bamPrintInfo(bamFile, pos_lst_file, minInsert, maxInsert, max_gap, minq, refListHash, verbose);
