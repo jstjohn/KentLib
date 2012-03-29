@@ -32,14 +32,15 @@
  *
  */ 
 
-#define DEFAULT_MQ 30
-#define MAX_OCOUNT_LEN 301
-#define DEFAULT_MIN_INSERT 10
-#define DEFAULT_MAX_INSERT 5000
-#define MAX_COUNT (1000)
-#define GAP_LEN_TO_CHECK (100)
+#define DEFAULT_MQ (20)
+#define DEFAULT_MIN_INSERT (0)
+#define DEFAULT_MAX_INSERT (500)
+//max unsigned short - 1
+#define MAX_COUNT (65534)
+#define DEF_MAX_GAP_TO_CHECK (200000)
 
-unsigned int gapfreqbylenwithnosupport[GAP_LEN_TO_CHECK];
+unsigned int *gapfreqbylenwithnosupport = NULL;
+int maxSeenGap = 0;
 
 /**
  * Command line options
@@ -50,11 +51,12 @@ void usage()
 {
   errAbort(
       "faNStatsOverNoCovBamRegions -- print list of gaps less than 100 long with no reads in bam file supporting a span.\n"
-      "Usage: faNStatsOverNoCovBamRegions [options] bamFile.sorted.bam reference.fa \n"
+      "Usage: faNStatsOverNoCovBamRegions [options] bamFile.sorted.bam reference.fa out.pos.lst out.gap.stats \n"
       "\noptions:\n"
       "\t-minInsert=INT\tread pairs with inserts less than this value aren't considered (default: 10)\n"
-      "\t-maxInsert=INT\tread pairs with inserts greater than this value are marked as bad (default: 5000)\n"
-      "\t-minq=INT\tonly consider alignments where the left read has at least a mapq of (default: 30)\n"
+      "\t-maxInsert=INT\tread pairs with inserts greater than this value are marked as bad (default: 500)\n"
+      "\t-maxGap=INT\tconsider gaps up to this length(default: 200000)\n"
+      "\t-minq=INT\tonly consider alignments where the left read has at least a mapq of (default: 20)\n"
       "\t-verbose\twrite some program status information to stderr.\n"
       "\t-help\twrite this help to the screen.\n"
       );
@@ -66,6 +68,7 @@ static struct optionSpec options[] = {
   {"minInsert",OPTION_INT},
   {"maxInsert",OPTION_INT},
   {"minq",OPTION_INT},
+  {"maxGap",OPTION_INT},
   {"help",OPTION_BOOLEAN},
   {"verbose",OPTION_BOOLEAN},
   {NULL, 0}
@@ -146,7 +149,7 @@ int addReadCovToCovLst(bam1_t *b, unsigned short *insert_coverage_counts){
 }
 
 
-void printChromInfo(FILE *out, char *name, int length, unsigned short *insert_coverage_counts, struct hash *refListHash){
+void printChromInfo(FILE *out, char *name, int length, int max_gap, unsigned short *insert_coverage_counts, struct hash *refListHash){
   int i = 0;
   struct dnaSeq *refSeq = NULL;
   DNA *refDna = NULL;
@@ -164,11 +167,16 @@ void printChromInfo(FILE *out, char *name, int length, unsigned short *insert_co
     }else{
       if(thisGapLen > 0){
         //we just got out of a gap
-        if((thisGapLen < GAP_LEN_TO_CHECK) && (spanningseq == FALSE)){
-          gapfreqbylenwithnosupport[thisGapLen]++;
+        if(spanningseq == FALSE){
           int j;
           for(j=i-thisGapLen;j<i;j++)
               fprintf(out, "%s\t%d\n", name, j);
+
+          if(thisGapLen < max_gap){
+            gapfreqbylenwithnosupport[thisGapLen]++;
+            if(thisGapLen>maxSeenGap)
+              maxSeenGap = thisGapLen;
+          }
         }
 
         //reset to normal state
@@ -181,7 +189,7 @@ void printChromInfo(FILE *out, char *name, int length, unsigned short *insert_co
 
 
 
-void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, int minmq, struct hash *refListHash, boolean verbose)
+void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, int max_gap, int minmq, struct hash *refListHash, boolean verbose)
   /* iterate through bam alignments, storing */
 {
   int lastTID=-1; //real TIDs are never negative
@@ -200,7 +208,7 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, i
       //new
       if (insert_coverage_counts != NULL){
         char *name = header->target_name[lastTID];
-        printChromInfo(out, name, length, insert_coverage_counts, refListHash);
+        printChromInfo(out, name, length, max_gap, insert_coverage_counts, refListHash);
 
         free(insert_coverage_counts);
         insert_coverage_counts = NULL;
@@ -251,7 +259,7 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, i
   //now that loop is done, take care of last bucket if it is there.
   if (insert_coverage_counts != NULL){
     char *name = header->target_name[lastTID];
-    printChromInfo(out, name, length, insert_coverage_counts, refListHash);
+    printChromInfo(out, name, length, max_gap, insert_coverage_counts, refListHash);
 
 
     //free old count structures
@@ -277,11 +285,12 @@ int main(int argc, char *argv[])
   optionInit(&argc, argv, options);
   boolean help = optionExists("help");
   boolean verbose = optionExists("verbose");
-  if(help || argc != 3) usage();
+  if(help || argc != 5) usage();
 
   int maxInsert = optionInt("maxInsert",DEFAULT_MAX_INSERT);
   int minInsert = optionInt("minInsert",DEFAULT_MIN_INSERT);
   int minq = optionInt("minq",DEFAULT_MQ);
+  int max_gap = optionInt("maxGap",DEF_MAX_GAP_TO_CHECK);
 
   samfile_t *bamFile = samopen(argv[1],"rb",NULL);
   if(!bamFile){
@@ -289,27 +298,29 @@ int main(int argc, char *argv[])
       usage();
     }
   int i;
-  for(i=0;i<GAP_LEN_TO_CHECK;i++)
-    gapfreqbylenwithnosupport[i] = 0;
+
+  //initialize our gap freq storage
+  gapfreqbylenwithnosupport = (unsigned int *) calloc(max_gap, sizeof(unsigned int));
+
 
   struct dnaSeq *refList = dnaLoadAll(argv[2]);
   struct hash *refListHash = dnaSeqHash(refList);
 
-  bamPrintInfo(bamFile, stdout, minInsert, maxInsert, minq, refListHash, verbose);
+  FILE *pos_lst_file = fopen(argv[3],"r");
+  FILE *gap_stats_file = fopen(argv[4], "w");//write and/or create
 
-  //now print the n stats as a comment
-  fprintf(stdout,"#");
-  for(i=0;i<GAP_LEN_TO_CHECK;i++)
-    fprintf(stdout,"\tN:%d",i);
-  fprintf(stdout,"\n");
-  fprintf(stdout,"#");
-  for(i=0;i<GAP_LEN_TO_CHECK;i++)
-    fprintf(stdout,"\t%d",gapfreqbylenwithnosupport[i]);
-  fprintf(stdout,"\n");
+  bamPrintInfo(bamFile, pos_lst_file, minInsert, maxInsert, max_gap, minq, refListHash, verbose);
+
+  //now print the n stats as comments
+  fprintf(gap_stats_file,"#GapSize\tFrequency");
+  for(i=1;i<maxSeenGap;i++)
+    fprintf(gap_stats_file,"%d\n%u",i,gapfreqbylenwithnosupport[i]);
 
 
-
+  fclose(pos_lst_file);
+  fclose(gap_stats_file);
   samclose(bamFile);
+  free(gapfreqbylenwithnosupport);
 
 
   return(0);
