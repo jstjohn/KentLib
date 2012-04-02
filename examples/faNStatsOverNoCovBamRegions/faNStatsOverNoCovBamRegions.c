@@ -84,8 +84,8 @@ static struct optionSpec options[] = {
 int addReadCovToCovLst(bam1_t *b, unsigned short *insert_coverage_counts){
   int i,k,l,op,end;
   bam1_core_t *c = &(b->core);
-  unsigned int tpos = c->pos;
-  unsigned int tpos_ori = tpos;
+  int tpos = c->pos;
+  int tpos_ori = tpos;
   k = 0;
   unsigned int *cigar;
   cigar = bam1_cigar(b);
@@ -241,12 +241,12 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, i
 
       int seqlen = addReadCovToCovLst(b,insert_coverage_counts);
 
-      if(((b->core.flag & BAM_FPAIRED) != 0) && ((b->core.flag & BAM_FMUNMAP) == 0) && (b->core.tid == b->core.mtid)){
+      if(((b->core.flag & BAM_FPAIRED) != 0) && ((b->core.flag & BAM_FMUNMAP) == 0) && ((b->core.tid) == (b->core.mtid))){
         //read and mate both map
         int mypos = b->core.pos;
         int opos = b->core.mpos;
         int endpos = mypos+seqlen;
-        int gaplen = opos-endpos;
+        int gaplen = opos - endpos;
 
         if( gaplen > 0 && gaplen >= minInsert && gaplen <= maxInsert){
           for(i=endpos;i<opos;i++){

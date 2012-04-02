@@ -91,6 +91,22 @@ inline void printFastqItem(FILE *fp, struct fastqItem *fq)
   fprintf(fp,"\n");
 }
 
+inline void gzPrintFastqItem(gzFile *fp, struct fastqItem *fq){
+  int i;
+
+  gzprintf(fp,"@%s\n",fq->id);
+  for(i=0; i < fq->len; i++)
+  {
+    gzprintf(fp,"%c",fq->seq[i]);
+  }
+  gzprintf(fp,"\n+\n");
+  for(i=0; i< fq->len; i++)
+  {
+    gzprintf(fp,"%c",fq->score[i]);
+  }
+  gzprintf(fp,"\n");
+}
+
 
 
 boolean fastqItemNext(struct lineFile *lf, struct fastqItem *fq)

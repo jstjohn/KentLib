@@ -17,6 +17,7 @@
 #include "linefile.h"
 #include <math.h>
 #include <string.h>
+#include <zlib.h>
 
 /* Global Constants */
 #define MAX_PHRED 93
@@ -52,6 +53,7 @@ struct fastqItem * allocFastqItem();
 void freeFastqItem(struct fastqItem * fq);
 inline void reverseComplementFastqItem(struct fastqItem *fq);
 inline void printFastqItem(FILE *fp, struct fastqItem *fq);
+inline void gzPrintFastqItem(gzFile *fp, struct fastqItem *fq);
 
 
 #endif
