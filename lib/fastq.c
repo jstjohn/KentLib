@@ -185,12 +185,12 @@ boolean fastqItemNext(struct lineFile *lf, struct fastqItem *fq)
 
 inline void convPhred33ToPhred64( struct fastqItem *fq )
 {
-  phred33ToPhred64(fq->seq,fq->len);
+  phred33ToPhred64(fq->score,fq->len);
 }//end phred33To64
 
 inline void convPhred64ToPhred33(struct fastqItem *fq)
 {
-  phred64ToPhred33(fq->seq,fq->len);
+  phred64ToPhred33(fq->score,fq->len);
 }
 
 inline void phred33ToPhred64( char * p33, int l )
