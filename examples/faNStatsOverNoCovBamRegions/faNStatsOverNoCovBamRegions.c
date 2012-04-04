@@ -63,6 +63,15 @@ void usage()
       );
 }//end usage()
 
+#ifdef DEBUG
+int mystrcmp(char *a, char *b){
+        return strcmp(a,b);
+}
+int mystrncmp(char *a, char *b, int n){
+        return strncmp(a,b,n);
+}
+#endif
+
 
 static struct optionSpec options[] = {
   /* Structure holding command line options */
