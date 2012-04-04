@@ -42,6 +42,7 @@
 unsigned int *gapfreqbylenwithnosupport = NULL;
 int maxSeenGap = 0;
 
+
 /**
  * Command line options
  */ 
@@ -81,7 +82,7 @@ static struct optionSpec options[] = {
  *
  */
 
-int addReadCovToCovLst(bam1_t *b, unsigned short *insert_coverage_counts){
+inline int addReadCovToCovLst(bam1_t *b, unsigned short *insert_coverage_counts){
   int i,k,l,op,end;
   bam1_core_t *c = &(b->core);
   int tpos = c->pos;
@@ -149,7 +150,10 @@ int addReadCovToCovLst(bam1_t *b, unsigned short *insert_coverage_counts){
 }
 
 
-void printChromInfo(FILE *out, char *name, int length, int max_gap, unsigned short *insert_coverage_counts, struct hash *refListHash){
+inline void printChromInfo(FILE *out, char *name,
+    const int length, const int max_gap,
+    const unsigned short * const insert_coverage_counts,
+    struct hash *refListHash){
   int i = 0;
   struct dnaSeq *refSeq = NULL;
   DNA *refDna = NULL;
@@ -189,7 +193,7 @@ void printChromInfo(FILE *out, char *name, int length, int max_gap, unsigned sho
 
 
 
-void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, int max_gap, int minmq, struct hash *refListHash, boolean verbose)
+void bamPrintInfo(samfile_t *bamFile, FILE* out, const int minInsert, const int maxInsert, const int max_gap, const int minmq, struct hash *refListHash, const boolean verbose)
   /* iterate through bam alignments, storing */
 {
   int lastTID=-1; //real TIDs are never negative
@@ -239,14 +243,14 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, int minInsert, int maxInsert, i
     if(b->core.qual >= minmq && (0 == (b->core.flag & BAM_FUNMAP)))
     { //this read aligns somewhere
 
-      int seqlen = addReadCovToCovLst(b,insert_coverage_counts);
+      const int seqlen = addReadCovToCovLst(b,insert_coverage_counts);
 
-      if(((b->core.flag & BAM_FPAIRED) != 0) && ((b->core.flag & BAM_FMUNMAP) != 0) && ((b->core.tid) == (b->core.mtid))){
+      if(((b->core.flag & BAM_FPAIRED) != 0) && ((b->core.flag & BAM_FMUNMAP) == 0) && ((b->core.tid) == (b->core.mtid))){
         //read and mate both map
-        int mypos = b->core.pos;
-        int opos = b->core.mpos;
-        int endpos = mypos+seqlen;
-        int gaplen = opos - endpos;
+        const int mypos = b->core.pos;
+        const int opos = b->core.mpos;
+        const int endpos = mypos + seqlen;
+        const int gaplen = opos - endpos;
 
         if( gaplen > 0 && gaplen >= minInsert && gaplen <= maxInsert){
           for(i=endpos;i<opos;i++){
@@ -294,10 +298,10 @@ int main(int argc, char *argv[])
   boolean verbose = optionExists("verbose");
   if(help || argc != 5) usage();
 
-  int maxInsert = optionInt("maxInsert",DEFAULT_MAX_INSERT);
-  int minInsert = optionInt("minInsert",DEFAULT_MIN_INSERT);
-  int minq = optionInt("minq",DEFAULT_MQ);
-  int max_gap = optionInt("maxGap",DEF_MAX_GAP_TO_CHECK);
+  const int maxInsert = optionInt("maxInsert",DEFAULT_MAX_INSERT);
+  const int minInsert = optionInt("minInsert",DEFAULT_MIN_INSERT);
+  const int minq = optionInt("minq",DEFAULT_MQ);
+  const int max_gap = optionInt("maxGap",DEF_MAX_GAP_TO_CHECK);
 
   samfile_t *bamFile = samopen(argv[1],"rb",NULL);
   if(!bamFile){
@@ -315,7 +319,6 @@ int main(int argc, char *argv[])
 
   struct dnaSeq *refList = dnaLoadAll(argv[2]);
   struct hash *refListHash = dnaSeqHash(refList);
-
   bamPrintInfo(bamFile, pos_lst_file, minInsert, maxInsert, max_gap, minq, refListHash, verbose);
 
   //now print the n stats as comments
