@@ -64,6 +64,14 @@ void usage()
 }//end usage()
 
 #ifdef DEBUG
+// #the following read should span a singleton gap, but it is being reported as not spanned.
+//HWI-6X_10323:6:118:5219:5118#0
+//
+//break 219
+// #the macro bam1_qname(b) expands to ((char*)((b)->data))
+// #so this is what we do in gdb
+//condition 1 mystrcmp("HWI-6X_10323:6:118:5219:5118#0",((char*)((b)->data))) == 0
+//run -minInsert=0 -maxInsert=600 -maxGap=200000 -minq=3 align/braun.320.sorted.rmdup.ids.dedup.realign.recal.bam allMis1R1.fa braun.shortGapNoSupport.lst braun.shortGapNoSupport.stats
 int mystrcmp(char *a, char *b){
         return strcmp(a,b);
 }
@@ -216,7 +224,7 @@ void bamPrintInfo(samfile_t *bamFile, FILE* out, const int minInsert, const int 
   fprintf(out, "#seq_name\tposition(0-based)\n");
   while(samread(bamFile, b)>=0)
   {
-    if((b->core.flag & BAM_FUNMAP) == 0)
+    if((b->core.flag & BAM_FUNMAP) != 0)
       continue; //skip unmapped reads
 
     if(b->core.tid != lastTID){
