@@ -30,6 +30,7 @@
  */
 
 #define MIN_SEQ_LEN 200
+#define MIN_GAP_LEN 25
 
 
 
@@ -46,6 +47,7 @@ void usage()
       "\tUsage: faRemoveShortContigsFromScaffolds [options] genome.scaf.fa out.genome.scaf.fa\n"
       "\noptions:\n"
       "\t-minLen=NUM\tMinimum contig length in scaffold file to keep. (default: 200)\n"
+      "\t-minGapLen=NUM\tMinimum contig length in scaffold file to keep. (default: 25)\n"
       "\t-help\tWrites this help to the screen, and exits.\n"
       );
 }//end usage()
@@ -55,6 +57,7 @@ static struct optionSpec options[] = {
     /* Structure holding command line options */
     {"help",OPTION_BOOLEAN},
     {"minLen",OPTION_INT},
+    {"minGapLen",OPTION_INT},
     {NULL, 0}
 }; //end options()
 
@@ -107,7 +110,7 @@ inline int endNTrimPos(DNA *seq, int len){
   return(i+1);
 }
 
-void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, int minLen){
+void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int minLen, const int minGapLen){
   struct lineFile *lf = lineFileOpen(faFile,TRUE);
   DNA *seq;
   int seqLen , i = 0;
@@ -116,15 +119,19 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, int minLen
   while(faMixedSpeedReadNext(lf, &seq, &seqLen, &seqName)){
 
     int ctgLen = 0;
+    int gapLen = 0;
     for(i=0;i<seqLen;i++){
       if(toupper(seq[i]) == 'N'){
-        if(ctgLen > 0 && ctgLen < minLen){
+        gapLen++;
+        if(ctgLen > 0 && ctgLen < minLen && gapLen >= minGapLen){
           //need to mask
           maskRange(seq,i-ctgLen,i);
         }
-        ctgLen = 0; //make sure it is 0 since we have seen a gap
+        if(gapLen >= minGapLen)
+          ctgLen = 0; //make sure it is 0 since we have seen a gap
       }else{
         ctgLen++;
+        gapLen = 0;
       }
     }
 
@@ -158,10 +165,12 @@ int main(int argc, char *argv[])
   optionInit(&argc, argv, options);
   boolean help = optionExists("help");
   int minLen = optionInt("minLen",MIN_SEQ_LEN);
+  int minGapLen = optionInt("minGapLen",MIN_GAP_LEN);
+
   if(help) usage();
   if(argc != 3) usage();
   FILE *outstream = fopen(argv[2],"w");
-  faRemoveShortContigsFromScaffolds(argv[1], outstream, minLen);
+  faRemoveShortContigsFromScaffolds(argv[1], outstream, minLen, minGapLen);
   fclose(outstream);
   return(0);
 } //end main()
