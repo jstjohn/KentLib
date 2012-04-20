@@ -19,6 +19,7 @@
 #include "options.h"
 #include "linefile.h"
 #include "fa.h"
+#include "dnaLoad.h"
 #include <math.h>
 #include <ctype.h>
 
@@ -111,13 +112,17 @@ inline int endNTrimPos(DNA *seq, int len){
 }
 
 void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int minLen, const int minGapLen){
-  struct lineFile *lf = lineFileOpen(faFile,TRUE);
+  struct dnaLoad *dnaload = dnaLoadOpen(faFile);
   DNA *seq;
   int seqLen , i = 0;
   char *seqName;
+  char *comment;
+  struct dnaSeq *retSeq;
 
-  while(faMixedSpeedReadNext(lf, &seq, &seqLen, &seqName)){
-
+  while((retSeq = dnaLoadNext(dnaload)) != NULL ){
+    seq = retSeq->dna;
+    seqLen = retSeq->size;
+    seqName = retSeq->name;
     int ctgLen = 0;
     int gapLen = 0;
     for(i=0;i<seqLen;i++){
@@ -143,18 +148,19 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
     //if the sequence is longer than our minLen
     //and not all gaps, then print it!
     if(endPos <= beginPos)
-      continue; //discard sequence
+      goto CLEANUP; //discard sequence
 
     int afterTrimLen = endPos - beginPos;
     if(afterTrimLen < minLen)
-      continue; //discard if too short
+      goto CLEANUP; //discard if too short
 
     if(allN(seq+beginPos, afterTrimLen) == FALSE)
       faWriteNext(outstream, seqName, seq+beginPos, afterTrimLen);
 
+    CLEANUP:
+    freeDnaSeq(&retSeq);
   }//end loop over fasta sequences
-  faFreeFastBuf();
-  lineFileClose(&lf);
+  dnaLoadClose(&dnaload);
 }
 
 
