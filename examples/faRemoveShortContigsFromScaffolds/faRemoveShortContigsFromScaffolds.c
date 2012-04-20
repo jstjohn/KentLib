@@ -20,6 +20,7 @@
 #include "linefile.h"
 #include "fa.h"
 #include <math.h>
+#include <ctype.h>
 
 
 
