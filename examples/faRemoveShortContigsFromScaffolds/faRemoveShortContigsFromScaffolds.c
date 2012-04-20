@@ -126,7 +126,7 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
         if(ctgLen > 0 && ctgLen < minLen && gapLen == minGapLen){
           //need to mask
           //we have seen minGapLen N's already
-          maskRange(seq,i-ctgLen-minGapLen,i-minGapLen+1);
+          maskRange(seq,i-ctgLen-minGapLen+1,i-minGapLen+1);
         }
         if(gapLen >= minGapLen)
           ctgLen = 0; //make sure it is 0 since we have seen a real gap
