@@ -123,12 +123,13 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
     for(i=0;i<seqLen;i++){
       if(toupper(seq[i]) == 'N'){
         gapLen++;
-        if(ctgLen > 0 && ctgLen < minLen && gapLen >= minGapLen){
+        if(ctgLen > 0 && ctgLen < minLen && gapLen == minGapLen){
           //need to mask
-          maskRange(seq,i-ctgLen,i);
+          //we have seen minGapLen N's already
+          maskRange(seq,i-ctgLen-minGapLen,i-minGapLen+1);
         }
         if(gapLen >= minGapLen)
-          ctgLen = 0; //make sure it is 0 since we have seen a gap
+          ctgLen = 0; //make sure it is 0 since we have seen a real gap
       }else{
         ctgLen++;
         gapLen = 0;
