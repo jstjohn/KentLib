@@ -99,7 +99,7 @@ inline int beginNTrimPos(DNA *seq, int len){
 
 inline int endNTrimPos(DNA *seq, int len){
   int i = 0;
-  for(i=len-1; i >= 0; i++){
+  for(i=len-1; i >= 0; i--){
     if(toupper(seq[i]) != 'N')
       return(i);
   }
