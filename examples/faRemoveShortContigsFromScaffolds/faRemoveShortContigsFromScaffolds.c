@@ -83,10 +83,10 @@ inline boolean allN(DNA *seq, int len){
   int i;
   for(i=0;i<len;i++){
     if(toupper(seq[i]) != 'N'){
-      return(TRUE);
+      return(FALSE);
     }
   }
-  return(FALSE);
+  return(TRUE);
 }
 
 inline int beginNTrimPos(DNA *seq, int len){
