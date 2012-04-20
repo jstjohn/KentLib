@@ -101,9 +101,9 @@ inline int endNTrimPos(DNA *seq, int len){
   int i = 0;
   for(i=len-1; i >= 0; i--){
     if(toupper(seq[i]) != 'N')
-      return(i);
+      return(i+1);
   }
-  return(i);
+  return(i+1);
 }
 
 void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, int minLen){
@@ -140,7 +140,7 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, int minLen
     if(afterTrimLen < minLen)
       continue; //discard if too short
 
-    if(!allN(seq+beginPos, afterTrimLen))
+    if(allN(seq+beginPos, afterTrimLen) == FALSE)
       faWriteNext(outstream, seqName, seq+beginPos, afterTrimLen);
 
   }//end loop over fasta sequences
