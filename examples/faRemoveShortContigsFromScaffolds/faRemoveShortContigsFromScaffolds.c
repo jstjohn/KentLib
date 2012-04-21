@@ -124,7 +124,7 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
     for(i=0;i<seqLen;i++){
       if(toupper(seq[i]) == 'N'){
         gapLen++;
-        if(ctgLen > 0 && ctgLen < minLen && gapLen == minGapLen){
+        if(ctgLen-gapLen+1 > 0 && ctgLen-gapLen+1 < minLen && gapLen == minGapLen){
           //need to mask
           //we have seen minGapLen N's already
           //and ctgLen has been incremented by minGapLen-1 N's
