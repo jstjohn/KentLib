@@ -151,17 +151,19 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
     //if the sequence is longer than our minLen
     //and not all gaps, then print it!
     if(endPos <= beginPos)
-      goto CLEANUP; //discard sequence
+      continue;
+      //goto CLEANUP; //discard sequence
 
     int afterTrimLen = endPos - beginPos;
     if(afterTrimLen < minLen)
-      goto CLEANUP; //discard if too short
+      continue;
+      //goto CLEANUP; //discard if too short
 
     if(allN(seq+beginPos, afterTrimLen) == FALSE)
       faWriteNext(outstream, seqName, seq+beginPos, afterTrimLen);
 
-    CLEANUP:
-    freeDnaSeq(&retSeq);
+    //CLEANUP:
+    //freeDnaSeq(&retSeq);
   }//end loop over fasta sequences
   dnaLoadClose(&dnaload);
 }
