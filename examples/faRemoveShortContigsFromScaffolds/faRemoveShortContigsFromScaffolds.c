@@ -129,7 +129,7 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
           //we have seen minGapLen N's already
           //and ctgLen has been incremented by minGapLen-1 N's
           //into this gap
-          maskRange(seq,i-ctgLen,i-minGapLen+1);
+          maskRange(seq,i-ctgLen,i-gapLen+1);
         }
         if(gapLen >= minGapLen){
           ctgLen = 0; //make sure it is 0 since we have seen a real gap
@@ -140,6 +140,13 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
         ctgLen++;
         gapLen = 0;
       }
+    }
+    if(ctgLen-gapLen+1 > 0 && ctgLen-gapLen+1 < minLen){
+      //need to mask
+      //we have seen minGapLen N's already
+      //and ctgLen has been incremented by minGapLen-1 N's
+      //into this gap
+      maskRange(seq,i-ctgLen,i-gapLen+1);
     }
 
     int beginPos = beginNTrimPos(seq,seqLen);
