@@ -112,17 +112,13 @@ inline int endNTrimPos(DNA *seq, int len){
 }
 
 void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int minLen, const int minGapLen){
-  struct dnaLoad *dnaload = dnaLoadOpen(faFile);
+  struct lineFile *lf = lineFileOpen(faFile,TRUE);
   DNA *seq;
   int seqLen , i = 0;
   char *seqName;
-  char *comment;
-  struct dnaSeq *retSeq;
 
-  while((retSeq = dnaLoadNext(dnaload)) != NULL ){
-    seq = retSeq->dna;
-    seqLen = retSeq->size;
-    seqName = retSeq->name;
+
+  while(faMixedSpeedReadNext(lf, &seq, &seqLen, &seqName)){
     int ctgLen = 0;
     int gapLen = 0;
     for(i=0;i<seqLen;i++){
@@ -131,7 +127,9 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
         if(ctgLen > 0 && ctgLen < minLen && gapLen == minGapLen){
           //need to mask
           //we have seen minGapLen N's already
-          maskRange(seq,i-ctgLen-minGapLen+1,i-minGapLen+1);
+          //and ctgLen has been incremented by minGapLen-1 N's
+          //into this gap
+          maskRange(seq,i-ctgLen,i-minGapLen+1);
         }
         if(gapLen >= minGapLen){
           ctgLen = 0; //make sure it is 0 since we have seen a real gap
@@ -152,20 +150,17 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
     //and not all gaps, then print it!
     if(endPos <= beginPos)
       continue;
-      //goto CLEANUP; //discard sequence
 
     int afterTrimLen = endPos - beginPos;
     if(afterTrimLen < minLen)
       continue;
-      //goto CLEANUP; //discard if too short
 
     if(allN(seq+beginPos, afterTrimLen) == FALSE)
       faWriteNext(outstream, seqName, seq+beginPos, afterTrimLen);
 
-    //CLEANUP:
-    //freeDnaSeq(&retSeq);
   }//end loop over fasta sequences
-  dnaLoadClose(&dnaload);
+  faFreeFastBuf();
+  lineFileClose(&lf);
 }
 
 
