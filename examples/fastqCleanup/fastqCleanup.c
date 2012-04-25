@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
   }
 
   //put .gz at the end of output2 if needed
-  if(tolower(output2[outlen2-2]) == 'g' && tolower(output2[outlen2-2]) == 'z'){
+  if(tolower(output2[outlen2-2]) == 'g' && tolower(output2[outlen2-1]) == 'z'){
     strcpy(newOut2,output2);
   }else{
     sprintf(newOut2,"%s.gz",output2);
