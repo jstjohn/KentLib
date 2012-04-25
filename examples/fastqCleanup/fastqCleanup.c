@@ -62,24 +62,6 @@ static struct optionSpec options[] = {
 }; //end options()
 
 
-inline boolean cleanAndThrowOut(struct fastqItem *fq, const int minlen){
-  boolean throwOut = FALSE;
-  int seql = strlen(fq->seq);
-  int quall = strlen(fq->score);
-
-  if(seql != quall){
-    int minl = min(seql,quall);
-    if(minl < minlen)
-      return(TRUE);
-
-    fq->seq[minl] = '\0';
-    fq->score[minl] = '\0';
-    fq->len = minl;
-  }
-
-  return(throwOut);
-}
-
 /**
  * Main function, takes filenames for paired qseq reads
  * and outputs three files.
@@ -98,8 +80,8 @@ int fastqCleanup(char *inread1, char *inread2, char *outread1, char *outread2, c
   //loop over pairs of reads and clean up
   while(fastqItemNext(lf1,fq1) && fastqItemNext(lf2,fq2)){
 
-    boolean trash1 = cleanAndThrowOut(fq1,minlen);
-    boolean trash2 = cleanAndThrowOut(fq2,minlen);
+    boolean trash1 = cleanAndThrowOutFastqItem(fq1,minlen);
+    boolean trash2 = cleanAndThrowOutFastqItem(fq2,minlen);
 
     if((trash1 == TRUE) || (trash2 == TRUE))
       continue;

@@ -108,17 +108,39 @@ inline void gzPrintFastqItem(gzFile *fp, struct fastqItem *fq){
 }
 
 
+inline boolean cleanAndThrowOutFastqItem(struct fastqItem *fq, const int minlen){
+  boolean throwOut = FALSE;
+  int seql = strlen(fq->seq);
+  int quall = strlen(fq->score);
+
+  if(seql != quall){
+    int minl = min(seql,quall);
+    if(minl < minlen)
+      return(TRUE);
+
+    fq->seq[minl] = '\0';
+    fq->score[minl] = '\0';
+    fq->len = minl;
+  }
+
+  return(throwOut);
+}
+
 
 boolean fastqItemNext(struct lineFile *lf, struct fastqItem *fq)
 {
-  int start = 0;
+  int len = 0;
   char *line = NULL;
   boolean gotId = FALSE;
   boolean gotSeq = FALSE;
+  boolean gotScoreHead = FALSE;
   boolean gotScore = FALSE;
+
+
+
   //Get the ID line
   gotId = lineFileNextReal(lf,&line); //grab next non-blank non-comment line, should have @
-  if (! gotId) return FALSE;
+  if (! gotId) return(FALSE);
   line = skipLeadingSpaces(line);
   eraseTrailingSpaces(line);
   if (line[0] != '@')
@@ -129,58 +151,43 @@ boolean fastqItemNext(struct lineFile *lf, struct fastqItem *fq)
   //sprintf(fq->id, "%s",line+1);
   strcpy(fq->id,line+1);
   //get the Sequence
-  int seqLen = 0;
-  while (TRUE)
-  {
-    gotSeq = lineFileNextReal(lf,&line);
-    if (! gotSeq) lineFileUnexpectedEnd(lf);
-    line = skipLeadingSpaces(line);
-    eraseTrailingSpaces(line);
-    if (line[0] == '+') break;
-    int partLen = strlen(line);
-    start = seqLen;
-    seqLen += partLen;
-    //strAdd(line,fq->seq,0,partLen,start);
-    //sprintf((fq->seq)+start,"%s",line);
-    strcpy((fq->seq)+start,line);
-    if (line[0] == '@')
-      errAbort("ERROR: %s doesn't seem to be fastq format.  "
-          "Expecting sequence at line %d, got %c.",
-          lf->fileName, lf->lineIx, line[0]);
-  }
-  fq->len=seqLen;
-  //skip the +, just checked in previous loop
 
-  //get the Score, check that len(score) == len(seq)
-  seqLen=0;
-  while(TRUE)
-  {
-    //the problem is that @ and + are valid score characters
-    gotScore = lineFileNextReal(lf,&line);
-    if(! gotScore) break;
-    line = skipLeadingSpaces(line);
-    eraseTrailingSpaces(line);
-    int partLen = strlen(line);
-    if (line[0] == '@' && seqLen+partLen > fq->len)
-    {
-      lineFileReuse(lf); //start with this line next time
-      break;
-    }
-    if (line[0] == '+' && seqLen+partLen > fq->len)
-      errAbort("ERROR: %s doesn't seem to be fastq format.  "
-          "Expecting sequence at line %d, got %c.",
-          lf->fileName, lf->lineIx, line[0]);
-    //strAdd(line,fq->score,0,partLen,start);
-    //sprintf((fq->score)+start,"%s",line);
-    start=seqLen;
-    seqLen += partLen;
-    strcpy((fq->score)+start,line);
+  //get the sequence
+  gotSeq = lineFileNext(lf, &line, &len);
+  if (! gotSeq) lineFileUnexpectedEnd(lf);
+  line = skipLeadingSpaces(line);
+  eraseTrailingSpaces(line);
+  strcpy((fq->seq),line);
+  fq->len = strlen(line);
+
+
+  //check the score header line
+  gotScoreHead = lineFileNext(lf, &line, &len);
+  if(!gotScoreHead)
+    lineFileUnexpectedEnd(lf);
+  line = skipLeadingSpaces(line);
+  eraseTrailingSpaces(line);
+  if(line[0] != '+')
+    errAbort("ERROR: Expected '+' on line %d of file %s, got %s",lf->lineIx,lf->fileName,line);
+
+  //now get the score line
+  gotScore = lineFileNext(lf,&line,&len);
+  if(! gotScore)
+    lineFileUnexpectedEnd(lf);
+  line = skipLeadingSpaces(line);
+  eraseTrailingSpaces(line);
+  strcpy((fq->score),line);
+  len = strlen(fq->score);
+  if(len != fq->len){
+    warn("WARNING: %s has sequences and score strings that "
+            "are not the same length. Problem at line %d.\n"
+        "Seq: %s\n"
+        "Score: %s\n",
+            lf->fileName, lf->lineIx,
+            fq->seq, fq->score);
   }
-  if (seqLen != fq->len)
-    errAbort("ERROR: %s has sequences and score strings that "
-        "are not the same length. Problem at line %d.",
-        lf->fileName, lf->lineIx);
-  return TRUE;
+
+  return(TRUE);
 }
 
 inline void convPhred33ToPhred64( struct fastqItem *fq )

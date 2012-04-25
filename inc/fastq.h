@@ -54,7 +54,7 @@ void freeFastqItem(struct fastqItem * fq);
 inline void reverseComplementFastqItem(struct fastqItem *fq);
 inline void printFastqItem(FILE *fp, struct fastqItem *fq);
 inline void gzPrintFastqItem(gzFile *fp, struct fastqItem *fq);
-
+inline boolean cleanAndThrowOutFastqItem(struct fastqItem *fq, const int minlen);
 
 #endif
 
