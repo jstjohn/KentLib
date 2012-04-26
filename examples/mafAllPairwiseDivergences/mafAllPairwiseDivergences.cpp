@@ -26,7 +26,7 @@ extern "C" {
 #include <iostream>
 
 //#define NDEBUG
-#import <assert.h>
+#include <assert.h>
 
 using namespace std;
 
