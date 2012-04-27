@@ -124,7 +124,9 @@ vector<string> split(const string &s, char delim) {
     return(split(s, delim, elems));
 }
 
-#define DEF_MIN_LEN (30)
+#define DEF_MIN_LEN (200)
+#define DEF_MIN_SCORE (200)
+
 typedef map<string,NucDivergence> stringToNucDivergence;
 typedef map<string, stringToNucDivergence > stringPiarToNucDivergence;
 stringPiarToNucDivergence pairwiseDivergence;
@@ -139,6 +141,9 @@ void usage()
       "\tmafAllPairwiseDivergences [options] file1.maf[.gz] ... \n"
       "Options:\n"
       "\t-help\tPrints this message.\n"
+      "\t-minScore=NUM\tMinimum MAF alignment score to consider (default 200)\n"
+      "\t-minAlnLen=NUM\tMinimum MAF alignment block length to consider (default 200)\n"
+
   );
 }//end usage()
 
@@ -146,6 +151,8 @@ void usage()
 static struct optionSpec options[] = {
     /* Structure holding command line options */
     {(char*)"help",OPTION_STRING},
+    {(char*)"minScore",OPTION_INT},
+    {(char*)"minAlnLen",OPTION_INT},
     {NULL, 0}
 }; //end options()
 
@@ -153,13 +160,16 @@ static struct optionSpec options[] = {
  * Main function, takes filenames for paired qseq reads
  * and outputs three files.
  */
-int iterateOverAlignmentBlocks(char *fileName){
+int iterateOverAlignmentBlocks(char *fileName, int minScore, int minAlnLen){
   struct mafFile * mFile = mafOpen(fileName);
   struct mafAli * mAli;
 
   //loop over alignment blocks
   while((mAli = mafNext(mFile)) != NULL){
     struct mafComp *first = mAli->components;
+    int seqlen = mAli->textSize;
+    if(mAli->score < minScore || seqlen < minAlnLen)
+      continue;
 
     //First find and store set of duplicates in this block
     set<string> seen;
@@ -187,8 +197,9 @@ int iterateOverAlignmentBlocks(char *fileName){
           continue;
 
         assert(name1 != name2);
-        int seqlen = strlen(item1->text);
+        assert(seqlen == strlen(item1->text));
         assert(seqlen == strlen(item2->text));
+
 
 
         //make the first item of the index
@@ -235,9 +246,12 @@ int main(int argc, char *argv[])
   if(optionExists((char*)"help") || argc <= 1){
     usage();
   }
+  int minAlnScore = optionInt((char*)"minScore",DEF_MIN_SCORE);
+  int minAlnLen = optionInt((char*)"minAlnLen",DEF_MIN_LEN);
+
 
   for(int i = 1; i<argc; i++){
-    iterateOverAlignmentBlocks(argv[i]);
+    iterateOverAlignmentBlocks(argv[i], minAlnScore, minAlnLen);
   }
 
   //print the pairwise divergence
