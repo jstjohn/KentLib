@@ -168,12 +168,12 @@ int iterateOverAlignmentBlocks(char *fileName, int minScore, int minAlnLen){
   while((mAli = mafNext(mFile)) != NULL){
     struct mafComp *first = mAli->components;
     int seqlen = mAli->textSize;
-    if(mAli->score < minScore || seqlen < minAlnLen)
-      continue;
-
     //First find and store set of duplicates in this block
     set<string> seen;
     set<string> dups;
+    if(mAli->score < minScore || seqlen < minAlnLen)
+      goto CLEANUPALNBLOCK;
+
     for(struct mafComp *item = first; item != NULL; item = item->next){
       string tmp(item->src);
       string tname = split(tmp,'.')[0];
@@ -189,12 +189,12 @@ int iterateOverAlignmentBlocks(char *fileName, int minScore, int minAlnLen){
       string tmp1(item1->src);
       string name1 = split(tmp1,'.')[0];
       if(dups.count(name1))
-        continue;
+        goto CLEANUPALNBLOCK;
       for(struct mafComp *item2 = item1->next; item2 != NULL; item2 = item2->next){
         string tmp2(item2->src);
         string name2 = split(tmp2,'.')[0];
         if(dups.count(name2))
-          continue;
+          goto CLEANUPALNBLOCK;
 
         assert(name1 != name2);
         assert(seqlen == strlen(item1->text));
@@ -232,6 +232,8 @@ int iterateOverAlignmentBlocks(char *fileName, int minScore, int minAlnLen){
         } //end loop over pairwise block
       } //end loop over item2
     } //end loop over item1
+CLEANUPALNBLOCK:
+    mafAliFree(&mAli);
   }//end loop over alignment blocks
 
   mafFileFree(&mFile);
