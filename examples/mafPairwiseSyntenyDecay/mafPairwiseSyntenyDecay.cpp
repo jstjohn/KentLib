@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
       for(int i = 0; i < numBucketsThisWindow && i < blockCount; i++)
         totalWindows[i]++;
 
-      PairAlnInfoByPos::iterator posIterNext(posIter);
+      PairAlnInfoByPos::iterator posIterNext = posIter;
       posIterNext++; //move it up one position
       for( /* pre-initialized */; posIterNext != mainChromItter->second.end();
           posIterNext++){
