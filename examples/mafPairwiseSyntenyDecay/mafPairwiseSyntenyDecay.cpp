@@ -55,13 +55,13 @@ public:
     strand = _strand;
   }
   PairAlnInfo(){
-      oname = "DUMMY";
-      sstart = -1;
-      send = -1;
-      ostart = -1;
-      oend = -1;
-      strand = '+';
-    }
+    oname = "DUMMY";
+    sstart = -1;
+    send = -1;
+    ostart = -1;
+    oend = -1;
+    strand = '+';
+  }
   string getOName(){
     return(oname);
   }
@@ -89,18 +89,18 @@ public:
 };
 
 vector<string> &split(const string &s, char delim, vector<string> &elems) {
-    stringstream ss(s);
-    string item;
-    while(getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-    return(elems);
+  stringstream ss(s);
+  string item;
+  while(getline(ss, item, delim)) {
+    elems.push_back(item);
+  }
+  return(elems);
 }
 
 
 vector<string> split(const string &s, char delim) {
-    vector<string> elems;
-    return(split(s, delim, elems));
+  vector<string> elems;
+  return(split(s, delim, elems));
 }
 
 #define DEF_MIN_LEN (200)
@@ -216,7 +216,7 @@ int iterateOverAlignmentBlocksAndStorePairInfo(char *fileName, const int minScor
 
       } //end loop over item2
     } //end loop over item1
-CLEANUPALNBLOCK:
+    CLEANUPALNBLOCK:
     mafAliFree(&mAli);
   }//end loop over alignment blocks
 
@@ -255,58 +255,58 @@ int main(int argc, char *argv[])
   //we want the fraction of windows of each size that contain a break
   //
 
-  ChromToPairAlnInfoByPos::iterator mainChromItter;
-  for(mainChromItter = pairAlnInfoByPosByChrom.begin();
+  for(ChromToPairAlnInfoByPos::iterator mainChromItter = pairAlnInfoByPosByChrom.begin();
       mainChromItter != pairAlnInfoByPosByChrom.end();
       mainChromItter++){
     //process the alignments shared by this chromosome
     //note that map stores them sorted by begin position
     vector<int> keys;
-    PairAlnInfoByPos posToAlnBlocks = mainChromItter->second;
-    for(PairAlnInfoByPos::iterator posIter = posToAlnBlocks.begin();
-        posIter != posToAlnBlocks.end();
+
+    for(PairAlnInfoByPos::iterator posIter = mainChromItter->second.begin();
+        posIter != mainChromItter->second.end();
         posIter++){
       keys.push_back(posIter->first);
     }
 
     for(int i = 0; i < keys.size(); i++){
       //first check for trivial window (ie our block)
-      PairAlnInfo pi1 = posToAlnBlocks[keys[i]];
-      assert(pi1.getSEnd() > pi1.getSStart());
-      assert(pi1.getSStart() == keys[i]);
-      int numBucketsThisWindow = (pi1.getSEnd() - pi1.getSStart()) % blockSize;
-      int lastContigPos = pi1.getSEnd();
+      assert(mainChromItter->second[keys[i]].getSEnd() > mainChromItter->second[keys[i]].getSStart());
+      assert(mainChromItter->second[keys[i]].getSStart() == keys[i]);
+      int numBucketsThisWindow = (mainChromItter->second[keys[i]].getSEnd() - mainChromItter->second[keys[i]].getSStart()) / blockSize;
+      int lastContigPos = mainChromItter->second[keys[i]].getSEnd();
       for(int k = 0; k < numBucketsThisWindow && k < blockCount; k++)
         totalWindows[k]++;
 
 
       for(int j = i+1; j < keys.size(); j++){
-        if((keys[j] - keys[i]) >= (blockSize * blockCount)){
-          //i = j;
-          break;
-        }
 
-        PairAlnInfo pi2 = posToAlnBlocks[keys[j]];
+        assert(mainChromItter->second[keys[j]].getSStart() == keys[j]);
+        assert(mainChromItter->second[keys[j]].getSEnd() > mainChromItter->second[keys[j]].getSStart());
+        assert(mainChromItter->second[keys[j]].getSStart() > mainChromItter->second[keys[i]].getSStart());
 
-        assert(pi2.getSStart() == keys[j]);
-        assert(pi2.getSEnd() > pi2.getSStart());
-        assert(pi2.getSStart() > pi1.getSStart());
-
-        if(pi2.getOName() == pi1.getOName()){
-          int moreToInc = (pi2.getSEnd() - pi1.getSStart()) % blockSize;
-          lastContigPos = pi2.getSEnd();
+        if(mainChromItter->second[keys[j]].getOName() == mainChromItter->second[keys[i]].getOName()){
+          int moreToInc = (mainChromItter->second[keys[j]].getSEnd() - mainChromItter->second[keys[i]].getSStart()) / blockSize;
+          lastContigPos = mainChromItter->second[keys[j]].getSEnd();
           for(int k = numBucketsThisWindow; k < moreToInc && k < blockCount; k++)
             totalWindows[k]++;
           numBucketsThisWindow = moreToInc; //so we don't double count
         }else{
           //from the last contiguous position until the start of this
           // block, we have a break somewhere
-          int numDiscontigBuckets = (pi2.getSEnd() - pi1.getSStart()) % blockSize;
+          if((keys[j] - keys[i]) >= (blockSize * blockCount)){
+            //i = j;
+            break;
+          }
+          int numDiscontigBuckets = (mainChromItter->second[keys[j]].getSEnd() - mainChromItter->second[keys[i]].getSStart()) / blockSize;
           for(int k = numBucketsThisWindow; k < numDiscontigBuckets && k < blockSize; k++){
             containBreak[k]++;
             totalWindows[k]++;
           }
           numBucketsThisWindow = numDiscontigBuckets;
+        }
+        if((keys[j] - keys[i]) >= (blockSize * blockCount)){
+          //i = j;
+          break;
         }
       }
     }
@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
     cout << (i+1)*blockSize << '\t';
     cout << containBreak[i] << '\t';
     cout << totalWindows[i] << '\t';
-    cout << 1.0 - (double(containBreak[i])/double(totalWindows[i])) << endl;
+    cout << (totalWindows[i] > 0? 1.0 - (double(containBreak[i])/double(totalWindows[i])): 0) << endl;
   }
 
 
