@@ -45,30 +45,22 @@ public:
   PairAlnInfo( const string _oname,
       const int _sstart, const int _send,
       const int _ostart, const int _oend,
-      const char _strand ):
-        oname(_oname),
-        sstart(_sstart),
-        send(_send),
-        ostart(_ostart),
-        oend(_oend),
-        strand(_strand){}
-  PairAlnInfo( const char * const _oname,
-      const int _sstart, const int _send,
-      const int _ostart, const int _oend,
-      const char _strand ):
-        oname(_oname),
-        sstart(_sstart),
-        send(_send),
-        ostart(_ostart),
-        oend(_oend),
-        strand(_strand){}
-  PairAlnInfo():
-        oname(" "),
-        sstart(0),
-        send(0),
-        ostart(0),
-        oend(0),
-        strand('+'){}
+      const char _strand ){
+    oname = _oname;
+    sstart = _sstart;
+    send = _send;
+    ostart = _ostart;
+    oend = _oend;
+    strand = _strand;
+  }
+  PairAlnInfo(){
+      oname = "DUMMY";
+      sstart = -1;
+      send = -1;
+      ostart = -1;
+      oend = -1;
+      strand = '+';
+    }
 
   bool isPlus(){
     return(strand == '+');
