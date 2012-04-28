@@ -271,14 +271,9 @@ int main(int argc, char *argv[])
             totalWindows[k]++;
           numBucketsThisWindow = moreToInc; //so we don't double count
         }else{
-          //from the last contiguous position until the start of this
-          // block, we have a break somewhere
-//          if((keys[j] - keys[i]) >= (blockSize * blockCount)){
-//            //i = j;
-//            break;
-//          }
+
           int numDiscontigBuckets = (pi2.send - pi1.sstart) / blockSize;
-          for(int k = numBucketsThisWindow; k < numDiscontigBuckets && k < blockSize; k++){
+          for(int k = numBucketsThisWindow; k < numDiscontigBuckets && k < blockCount; k++){
             containBreak[k]++;
             totalWindows[k]++;
           }
