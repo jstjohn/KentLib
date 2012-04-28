@@ -59,18 +59,18 @@ private:
 
   bool isValid(const char base){
     switch(base){
-        case 'A':
-        case 'a':
-        case 'C':
-        case 'c':
-        case 'G':
-        case 'g':
-        case 'T':
-        case 't':
-          return(true);
-        default:
-          return(false);
-        }
+    case 'A':
+    case 'a':
+    case 'C':
+    case 'c':
+    case 'G':
+    case 'g':
+    case 'T':
+    case 't':
+      return(true);
+    default:
+      return(false);
+    }
   }
 public:
 
@@ -110,18 +110,18 @@ public:
 };
 
 vector<string> &split(const string &s, char delim, vector<string> &elems) {
-    stringstream ss(s);
-    string item;
-    while(getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-    return(elems);
+  stringstream ss(s);
+  string item;
+  while(getline(ss, item, delim)) {
+    elems.push_back(item);
+  }
+  return(elems);
 }
 
 
 vector<string> split(const string &s, char delim) {
-    vector<string> elems;
-    return(split(s, delim, elems));
+  vector<string> elems;
+  return(split(s, delim, elems));
 }
 
 #define DEF_MIN_LEN (200)
@@ -171,8 +171,11 @@ int iterateOverAlignmentBlocks(char *fileName, int minScore, int minAlnLen){
     //First find and store set of duplicates in this block
     set<string> seen;
     set<string> dups;
-    if(mAli->score < minScore || seqlen < minAlnLen)
-      goto CLEANUPALNBLOCK;
+    if(mAli->score < minScore || seqlen < minAlnLen){
+      //free here and pre-maturely end
+      mafAliFree(&mAli);
+      continue;
+    }
 
     for(struct mafComp *item = first; item != NULL; item = item->next){
       string tmp(item->src);
@@ -189,12 +192,12 @@ int iterateOverAlignmentBlocks(char *fileName, int minScore, int minAlnLen){
       string tmp1(item1->src);
       string name1 = split(tmp1,'.')[0];
       if(dups.count(name1))
-        goto CLEANUPALNBLOCK;
+        continue;
       for(struct mafComp *item2 = item1->next; item2 != NULL; item2 = item2->next){
         string tmp2(item2->src);
         string name2 = split(tmp2,'.')[0];
         if(dups.count(name2))
-          goto CLEANUPALNBLOCK;
+          continue;
 
         assert(name1 != name2);
         assert(seqlen == strlen(item1->text));
@@ -232,7 +235,6 @@ int iterateOverAlignmentBlocks(char *fileName, int minScore, int minAlnLen){
         } //end loop over pairwise block
       } //end loop over item2
     } //end loop over item1
-CLEANUPALNBLOCK:
     mafAliFree(&mAli);
   }//end loop over alignment blocks
 

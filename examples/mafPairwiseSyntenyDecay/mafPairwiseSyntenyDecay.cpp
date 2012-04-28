@@ -59,7 +59,6 @@ public:
     ostart(-1),
     oend(-1),
     strand(-1){}
-
 };
 
 vector<string> &split(const string &s, char delim, vector<string> &elems) {
@@ -127,8 +126,11 @@ int iterateOverAlignmentBlocksAndStorePairInfo(char *fileName, const int minScor
     //First find and store set of duplicates in this block
     set<string> seen;
     set<string> dups;
-    if(mAli->score < minScore || seqlen < minAlnLen)
-      goto CLEANUPALNBLOCK;
+    if(mAli->score < minScore || seqlen < minAlnLen){
+      //free here and pre-maturely end
+      mafAliFree(&mAli);
+      continue;
+    }
 
     for(struct mafComp *item = first; item != NULL; item = item->next){
       string tmp(item->src);
@@ -145,14 +147,17 @@ int iterateOverAlignmentBlocksAndStorePairInfo(char *fileName, const int minScor
       string tmp1(item1->src);
       vector<string> nameSplit1 = split(tmp1,'.');
       string name1 = nameSplit1[0];
-      if(dups.count(name1) || (name1 != speciesMain && name1 != speciesOther))
-        goto CLEANUPALNBLOCK;
+      if(dups.count(name1) || (name1 != speciesMain && name1 != speciesOther)){
+        continue;
+      }
+
       for(struct mafComp *item2 = item1->next; item2 != NULL; item2 = item2->next){
         string tmp2(item2->src);
         vector<string> nameSplit2 = split(tmp2,'.');
         string name2 = nameSplit2[0];
-        if(dups.count(name2) || (name2 != speciesMain && name2 != speciesOther))
-          goto CLEANUPALNBLOCK;
+        if(dups.count(name2) || (name2 != speciesMain && name2 != speciesOther)){
+          continue;
+        }
 
         string chr1 = nameSplit1[1];
         string chr2 = nameSplit2[1];
@@ -190,7 +195,6 @@ int iterateOverAlignmentBlocksAndStorePairInfo(char *fileName, const int minScor
 
       } //end loop over item2
     } //end loop over item1
-    CLEANUPALNBLOCK:
     mafAliFree(&mAli);
   }//end loop over alignment blocks
 
