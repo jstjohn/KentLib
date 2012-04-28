@@ -35,13 +35,14 @@ Global variables
  */
 
 class PairAlnInfo {
-public:
+private:
   string oname;
   int sstart;
   int send;
   int ostart;
   int oend;
   char strand;
+public:
   PairAlnInfo( const string _oname,
       const int _sstart, const int _send,
       const int _ostart, const int _oend,
@@ -61,7 +62,24 @@ public:
       oend = -1;
       strand = '+';
     }
-
+  string getOName(){
+    return(oname);
+  }
+  int getSStart(){
+    return(sstart);
+  }
+  int getSEnd(){
+    return(send);
+  }
+  int getOStart(){
+    return(ostart);
+  }
+  int getOEnd(){
+    return(oend);
+  }
+  char getStrand(){
+    return(strand);
+  }
   bool isPlus(){
     return(strand == '+');
   }
@@ -254,10 +272,10 @@ int main(int argc, char *argv[])
     for(int i = 0; i < keys.size(); i++){
       //first check for trivial window (ie our block)
       PairAlnInfo pi1 = posToAlnBlocks[keys[i]];
-      assert(pi1.send > pi1.sstart);
-      assert(pi1.sstart == keys[i]);
-      int numBucketsThisWindow = (pi1.send - pi1.sstart) % blockSize;
-      int lastContigPos = pi1.send;
+      assert(pi1.getSEnd() > pi1.getSStart());
+      assert(pi1.getSStart() == keys[i]);
+      int numBucketsThisWindow = (pi1.getSEnd() - pi1.getSStart()) % blockSize;
+      int lastContigPos = pi1.getSEnd();
       for(int k = 0; k < numBucketsThisWindow && k < blockCount; k++)
         totalWindows[k]++;
 
@@ -270,20 +288,20 @@ int main(int argc, char *argv[])
 
         PairAlnInfo pi2 = posToAlnBlocks[keys[j]];
 
-        assert(pi2.sstart == keys[j]);
-        assert(pi2.send > pi2.sstart);
-        assert(pi2.sstart > pi1.sstart);
+        assert(pi2.getSStart() == keys[j]);
+        assert(pi2.getSEnd() > pi2.getSStart());
+        assert(pi2.getSStart() > pi1.getSStart());
 
-        if(pi2.oname == pi1.oname){
-          int moreToInc = (pi2.send - pi1.sstart) % blockSize;
-          lastContigPos = pi2.send;
+        if(pi2.getOName() == pi1.getOName()){
+          int moreToInc = (pi2.getSEnd() - pi1.getSStart()) % blockSize;
+          lastContigPos = pi2.getSEnd();
           for(int k = numBucketsThisWindow; k < moreToInc && k < blockCount; k++)
             totalWindows[k]++;
           numBucketsThisWindow = moreToInc; //so we don't double count
         }else{
           //from the last contiguous position until the start of this
           // block, we have a break somewhere
-          int numDiscontigBuckets = (pi2.send - pi1.sstart) % blockSize;
+          int numDiscontigBuckets = (pi2.getSEnd() - pi1.getSStart()) % blockSize;
           for(int k = numBucketsThisWindow; k < numDiscontigBuckets && k < blockSize; k++){
             containBreak[k]++;
             totalWindows[k]++;
