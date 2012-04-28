@@ -256,16 +256,15 @@ int main(int argc, char *argv[])
     //process the alignments shared by this chromosome
     //note that map stores them sorted by begin position
     vector<int> keys;
-    PairAlnInfoByPos *posToAlnBlocks = &mainChromItter->second;
-    for(PairAlnInfoByPos::iterator posIter = posToAlnBlocks->begin();
-        posIter != posToAlnBlocks->end();
+    for(PairAlnInfoByPos::iterator posIter = mainChromItter->second.begin();
+        posIter != mainChromItter->second.end();
         posIter++){
       keys.push_back(posIter->first);
     }
 
     for(int i = 0; i < keys.size(); i++){
       //first check for trivial window (ie our block)
-      PairAlnInfo pi1 = (*posToAlnBlocks)[keys[i]];
+      PairAlnInfo pi1 = mainChromItter->second[keys[i]];
       assert(pi1.send > pi1.sstart);
       assert(pi1.sstart == keys[i]);
       int numBucketsThisWindow = (pi1.send - pi1.sstart) / blockSize;
@@ -275,7 +274,7 @@ int main(int argc, char *argv[])
 
       for(int j = i+1; j < keys.size(); j++){
 
-        PairAlnInfo pi2 = (*posToAlnBlocks)[keys[j]];
+        PairAlnInfo pi2 = mainChromItter->second[keys[j]];
 
         assert(pi2.sstart == keys[j]);
         assert(pi2.send > pi2.sstart);
