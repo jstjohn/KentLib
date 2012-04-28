@@ -59,23 +59,7 @@ public:
     ostart(-1),
     oend(-1),
     strand(-1){}
-  PairAlnInfo(const PairAlnInfo &rhs):
-      oname(rhs.oname),
-      sstart(rhs.sstart),
-      send(rhs.send),
-      ostart(rhs.ostart),
-      oend(rhs.oend),
-      strand(rhs.strand){}
-  PairAlnInfo &operator=(const PairAlnInfo &rhs){
-    oname = rhs.oname;
-    sstart = rhs.sstart;
-    send = rhs.send;
-    ostart = rhs.ostart;
-    oend = rhs.oend;
-    strand = rhs.strand;
-    return(*this);
-  }
-  ~PairAlnInfo(){}
+
 };
 
 vector<string> &split(const string &s, char delim, vector<string> &elems) {
@@ -289,10 +273,10 @@ int main(int argc, char *argv[])
         }else{
           //from the last contiguous position until the start of this
           // block, we have a break somewhere
-          if((keys[j] - keys[i]) >= (blockSize * blockCount)){
-            //i = j;
-            break;
-          }
+//          if((keys[j] - keys[i]) >= (blockSize * blockCount)){
+//            //i = j;
+//            break;
+//          }
           int numDiscontigBuckets = (pi2.send - pi1.sstart) / blockSize;
           for(int k = numBucketsThisWindow; k < numDiscontigBuckets && k < blockSize; k++){
             containBreak[k]++;
