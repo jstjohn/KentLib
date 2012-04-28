@@ -253,7 +253,6 @@ int main(int argc, char *argv[])
       assert(pi1.send > pi1.sstart);
       assert(pi1.sstart == keys[i]);
       int numBucketsThisWindow = (pi1.send - pi1.sstart) / blockSize;
-      int lastContigPos = pi1.send;
       for(int k = 0; k < numBucketsThisWindow && k < blockCount; k++)
         totalWindows[k]++;
 
@@ -268,7 +267,6 @@ int main(int argc, char *argv[])
 
         if(pi2.oname == pi1.oname){
           int moreToInc = (pi2.send - pi1.sstart) / blockSize;
-          lastContigPos = pi2.send;
           for(int k = numBucketsThisWindow; k < moreToInc && k < blockCount; k++)
             totalWindows[k]++;
           numBucketsThisWindow = moreToInc; //so we don't double count
