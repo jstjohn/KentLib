@@ -225,8 +225,8 @@ int main(int argc, char *argv[])
     iterateOverAlignmentBlocksAndStorePairInfo(argv[i], minAlnScore, minAlnLen, speciesMain, speciesOther);
   }
 
-  const int blockSize = 1000;
-  const int blockCount = 100;
+  const int blockSize = 10000;
+  const int blockCount = 20;
 
   int totalWindows[blockCount] = {0};
   int containBreak[blockCount] = {0};
@@ -247,15 +247,43 @@ int main(int argc, char *argv[])
       keys.push_back(posIter->first);
     }
 
+    //pruning one-off
+    if(keys.size() >= 3){
+      for(int i=0, j=1, k=2; k < keys.size() && j < keys.size() && i < keys.size(); i++,j++,k++){
+        PairAlnInfo pi1 = mainChromItter->second[keys[i]];
+        PairAlnInfo pi2 = mainChromItter->second[keys[j]];
+        PairAlnInfo pi3 = mainChromItter->second[keys[k]];
+        if(pi1.oname == pi3.oname && pi1.oname != pi2.oname){
+          keys.erase(keys.begin()+j); //remove the j'th element
+        }
+      }
+    }
+    //pruning two-off
+    if(keys.size() >= 4){
+      for(int i=0, j=1, k=2, l=3; l < keys.size() && k < keys.size() && j < keys.size() && i < keys.size(); i++,j++,k++,l++){
+        PairAlnInfo pi1 = mainChromItter->second[keys[i]];
+        PairAlnInfo pi2 = mainChromItter->second[keys[j]];
+        PairAlnInfo pi3 = mainChromItter->second[keys[k]];
+        PairAlnInfo pi4 = mainChromItter->second[keys[l]];
+        if(pi1.oname == pi4.oname && pi1.oname != pi3.oname && pi1.oname != pi2.oname){
+          keys.erase(keys.begin()+j); //remove the j'th element
+          keys.erase(keys.begin()+k); //remove the k'th element
+        }
+      }
+    }
+
     for(int i = 0; i < keys.size(); i++){
       //first check for trivial window (ie our block)
       PairAlnInfo pi1 = mainChromItter->second[keys[i]];
       assert(pi1.send > pi1.sstart);
       assert(pi1.sstart == keys[i]);
-      int numBucketsThisWindow = (pi1.send - pi1.sstart) / blockSize;
-      for(int k = 0; k < numBucketsThisWindow && k < blockCount; k++)
-        totalWindows[k]++;
-
+//      int numBucketsThisWindow = (pi1.send - pi1.sstart) / blockSize;
+//      for(int k = 0; k < numBucketsThisWindow && k < blockCount; k++)
+//        totalWindows[k]++;
+      int incBucket = ((pi1.send - pi1.sstart) / blockCount);
+      if(incBucket >= 0 && incBucket < blockCount){
+        totalWindows[incBucket]++;
+      }
 
       for(int j = i+1; j < keys.size(); j++){
 
@@ -266,20 +294,28 @@ int main(int argc, char *argv[])
         assert(pi2.sstart > pi1.sstart);
 
         if(pi2.oname == pi1.oname){
-          int moreToInc = (pi2.send - pi1.sstart) / blockSize;
-          for(int k = numBucketsThisWindow; k < moreToInc && k < blockCount; k++)
-            totalWindows[k]++;
-          numBucketsThisWindow = moreToInc; //so we don't double count
-        }else{
-
-          int numDiscontigBuckets = (pi2.send - pi1.sstart) / blockSize;
-          for(int k = numBucketsThisWindow; k < numDiscontigBuckets && k < blockCount; k++){
-            containBreak[k]++;
-            totalWindows[k]++;
+//          int moreToInc = (pi2.send - pi1.sstart) / blockSize;
+//          for(int k = numBucketsThisWindow; k < moreToInc && k < blockCount; k++)
+//            totalWindows[k]++;
+//          numBucketsThisWindow = moreToInc; //so we don't double count
+          incBucket = ((pi2.send - pi1.sstart) / blockSize);
+          if(incBucket >= 0 && incBucket < blockCount){
+            totalWindows[incBucket]++;
           }
-          numBucketsThisWindow = numDiscontigBuckets;
+        }else{
+//          int numDiscontigBuckets = (pi2.send - pi1.sstart) / blockSize;
+//          for(int k = numBucketsThisWindow; k < numDiscontigBuckets && k < blockCount; k++){
+//            containBreak[k]++;
+//            totalWindows[k]++;
+//          }
+//          numBucketsThisWindow = numDiscontigBuckets;
+          incBucket = ((pi2.sstart - pi1.sstart) / blockSize);
+          if(incBucket >= 0 && incBucket < blockCount){
+            totalWindows[incBucket]++;
+            containBreak[incBucket]++;
+          }
         }
-        if((keys[j] - keys[i]) >= (blockSize * blockCount)){
+        if((pi2.send - pi1.sstart) >= (blockSize * blockCount)){
           //i = j;
           break;
         }
@@ -294,7 +330,7 @@ int main(int argc, char *argv[])
     cout << (i+1)*blockSize << '\t';
     cout << containBreak[i] << '\t';
     cout << totalWindows[i] << '\t';
-    cout << (totalWindows[i] > 0? 1.0 - (double(containBreak[i])/double(totalWindows[i])): 0) << endl;
+    cout << (totalWindows[i] > 0? 1.0 - (double(containBreak[i])/double(totalWindows[i])): 1.0) << endl;
   }
 
 
