@@ -63,7 +63,7 @@ public:
         oend(_oend),
         strand(_strand){}
   PairAlnInfo():
-        oname(""),
+        oname(" "),
         sstart(0),
         send(0),
         ostart(0),
@@ -251,47 +251,50 @@ int main(int argc, char *argv[])
       mainChromItter++){
     //process the alignments shared by this chromosome
     //note that map stores them sorted by begin position
-    PairAlnInfoByPos::iterator posIter;
-    for(posIter = mainChromItter->second.begin();
-        posIter != mainChromItter->second.end();
+    vector<int> keys;
+    PairAlnInfoByPos posToAlnBlocks = mainChromItter->second;
+    for(PairAlnInfoByPos::iterator posIter = posToAlnBlocks.begin();
+        posIter != posToAlnBlocks.end();
         posIter++){
+      keys.push_back(posIter->first);
+    }
+
+    for(int i = 0; i < keys.size(); i++){
       //first check for trivial window (ie our block)
-      PairAlnInfo pi1 = posIter->second;
+      PairAlnInfo pi1 = posToAlnBlocks[keys[i]];
       assert(pi1.send > pi1.sstart);
-      assert(pi1.sstart == posIter->first);
+      assert(pi1.sstart == keys[i]);
       int numBucketsThisWindow = (pi1.send - pi1.sstart) % blockSize;
       int lastContigPos = pi1.send;
-      for(int i = 0; i < numBucketsThisWindow && i < blockCount; i++)
-        totalWindows[i]++;
+      for(int k = 0; k < numBucketsThisWindow && k < blockCount; k++)
+        totalWindows[k]++;
 
-      PairAlnInfoByPos::iterator posIterNext = posIter;
-      posIterNext++; //move it up one position
-      for( /* pre-initialized */; posIterNext != mainChromItter->second.end();
-          posIterNext++){
-        if((posIterNext->first - posIter->first) >= (blockSize * blockCount)){
-          //posIter = posIterNext;
+
+      for(int j = i+1; j < keys.size(); j++){
+        if((keys[j] - keys[i]) >= (blockSize * blockCount)){
+          //i = j;
           break;
         }
 
-        PairAlnInfo pi2 = posIterNext->second;
+        PairAlnInfo pi2 = posToAlnBlocks[keys[j]];
 
-        assert(pi2.sstart == posIterNext->first);
+        assert(pi2.sstart == keys[j]);
         assert(pi2.send > pi2.sstart);
         assert(pi2.sstart > pi1.sstart);
 
         if(pi2.oname == pi1.oname){
           int moreToInc = (pi2.send - pi1.sstart) % blockSize;
           lastContigPos = pi2.send;
-          for(int i = numBucketsThisWindow; i < moreToInc && i < blockCount; i++)
-            totalWindows[i]++;
+          for(int k = numBucketsThisWindow; k < moreToInc && k < blockCount; k++)
+            totalWindows[k]++;
           numBucketsThisWindow = moreToInc; //so we don't double count
         }else{
           //from the last contiguous position until the start of this
           // block, we have a break somewhere
           int numDiscontigBuckets = (pi2.send - pi1.sstart) % blockSize;
-          for(int i = numBucketsThisWindow; i < numDiscontigBuckets && i < blockSize; i++){
-            containBreak[i]++;
-            totalWindows[i]++;
+          for(int k = numBucketsThisWindow; k < numDiscontigBuckets && k < blockSize; k++){
+            containBreak[k]++;
+            totalWindows[k]++;
           }
           numBucketsThisWindow = numDiscontigBuckets;
         }
