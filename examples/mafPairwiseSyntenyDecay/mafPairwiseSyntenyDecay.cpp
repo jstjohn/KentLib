@@ -146,22 +146,22 @@ int iterateOverAlignmentBlocksAndStorePairInfo(char *fileName, const int minScor
     for(struct mafComp *item1 = first; item1->next != NULL; item1 = item1->next){
       //stop one before the end
       string tmp1(item1->src);
-      vector<string> nameSplit1 = split(tmp1,'.');
-      string name1 = nameSplit1[0];
+      vector<string> nameSplit1(split(tmp1,'.'));
+      string name1(nameSplit1[0]);
       if(dups.count(name1) || (name1 != speciesMain && name1 != speciesOther)){
         continue;
       }
 
       for(struct mafComp *item2 = item1->next; item2 != NULL; item2 = item2->next){
         string tmp2(item2->src);
-        vector<string> nameSplit2 = split(tmp2,'.');
+        vector<string> nameSplit2(split(tmp2,'.'));
         string name2 = nameSplit2[0];
         if(dups.count(name2) || (name2 != speciesMain && name2 != speciesOther)){
           continue;
         }
 
-        string chr1 = nameSplit1[1];
-        string chr2 = nameSplit2[1];
+        string chr1(nameSplit1[1]);
+        string chr2(nameSplit2[1]);
         char strand;
         if(item1->strand == item2->strand)
           strand = '+';
@@ -214,8 +214,8 @@ int main(int argc, char *argv[])
   int minAlnScore = optionInt((char*)"minScore",DEF_MIN_SCORE);
   int minAlnLen = optionInt((char*)"minAlnLen",DEF_MIN_LEN);
 
-  string speciesMain = optionVal((char*)"speciesMain",NULL);
-  string speciesOther = optionVal((char*)"speciesOther",NULL);
+  string speciesMain(optionVal((char*)"speciesMain",NULL));
+  string speciesOther(optionVal((char*)"speciesOther",NULL));
 
   if(speciesMain.empty() || speciesOther.empty())
     usage();
