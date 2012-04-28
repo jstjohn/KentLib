@@ -75,6 +75,7 @@ public:
     strand = rhs.strand;
     return(*this);
   }
+  ~PairAlnInfo(){}
 };
 
 vector<string> &split(const string &s, char delim, vector<string> &elems) {
