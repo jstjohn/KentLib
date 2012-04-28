@@ -59,6 +59,22 @@ public:
     ostart(-1),
     oend(-1),
     strand(-1){}
+  PairAlnInfo(const PairAlnInfo &rhs):
+      oname(rhs.oname),
+      sstart(rhs.sstart),
+      send(rhs.send),
+      ostart(rhs.ostart),
+      oend(rhs.oend),
+      strand(rhs.strand){}
+  PairAlnInfo &operator=(const PairAlnInfo &rhs){
+    oname = rhs.oname;
+    sstart = rhs.sstart;
+    send = rhs.send;
+    ostart = rhs.ostart;
+    oend = rhs.oend;
+    strand = rhs.strand;
+    return(*this);
+  }
 };
 
 vector<string> &split(const string &s, char delim, vector<string> &elems) {
