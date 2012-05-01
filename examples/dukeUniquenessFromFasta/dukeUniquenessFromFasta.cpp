@@ -19,14 +19,14 @@ extern "C" {
 
 #include <string>
 #include <vector>
-#include <tr1/unordered_map>
+#include <sparsehash/sparse_hash_map>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 
 using namespace std;
-using namespace std::tr1;
-
+using google::sparse_hash_map;
+using tr1::hash;
 
 /*
 Global variables
@@ -73,6 +73,13 @@ char op_complement_upper(char c){
   }
 }
 
+struct eqstr
+{
+  bool operator()(const char* s1, const char* s2) const
+  {
+    return((s1 == s2) || (s1 && s2 && strcmp(s1, s2) == 0));
+  }
+};
 
 string getMinKmerFromSeq(char *seq, int K){
   string kmer(seq,K);
@@ -84,7 +91,7 @@ string getMinKmerFromSeq(char *seq, int K){
 }
 
 
-void fillKmerFreqHash(char *fastaFile, const int K, unordered_map<string, unsigned int> &mapToBuild){
+void fillKmerFreqHash(char *fastaFile, const int K, sparse_hash_map<const char*, unsigned int, hash<const char*>, eqstr> &mapToBuild){
   struct lineFile *lf = lineFileOpen(fastaFile,TRUE);
   DNA *seq;
   int seqLen;
@@ -99,7 +106,7 @@ void fillKmerFreqHash(char *fastaFile, const int K, unordered_map<string, unsign
         i+=int(found);
       }else{
         //no N's
-        mapToBuild[kmer]++;
+        mapToBuild[kmer.c_str()]++;
       }
     }
   }
@@ -107,7 +114,7 @@ void fillKmerFreqHash(char *fastaFile, const int K, unordered_map<string, unsign
   lineFileClose(&lf);
 }
 
-void printDukeUniquenessWiggle(char * fastaFile, char * outFile, const int K, unordered_map<string, unsigned int> &mapToBuild){
+void printDukeUniquenessWiggle(char * fastaFile, char * outFile, const int K, sparse_hash_map<const char*, unsigned int, hash<const char*>, eqstr> &mapToBuild){
   struct lineFile *lf = lineFileOpen(fastaFile,TRUE);
   DNA *seq;
   int seqLen;
@@ -128,7 +135,7 @@ void printDukeUniquenessWiggle(char * fastaFile, char * outFile, const int K, un
         i+=int(found);
       }else{
         //no N's
-        unsigned int count = mapToBuild[kmer];
+        unsigned int count = mapToBuild[kmer.c_str()];
         /*uniqueness=1=1 occurence,0.5=2,0.33=3,0.25=4,0=5 or more (or containing sequence ambiguities)*/
         switch(count){
         case 1:
@@ -167,7 +174,7 @@ int main(int argc, char *argv[])
   int iHash = optionInt((char*)"initHashSize",DEF_HASH_INIT);
 
   //step 1: load up the hash
-  unordered_map<string, unsigned int> kmerFreqHash(iHash);
+  sparse_hash_map<const char*, unsigned int, hash<const char*>, eqstr> kmerFreqHash;
   fillKmerFreqHash(argv[1],K,kmerFreqHash);
 
   //step 2: pass over assembly again and print the uniqueness

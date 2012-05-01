@@ -1,4 +1,5 @@
 CC=gcc
+CXX=g++
 MACHTYPE=x86_64
 LDFLAGS=-Lthirdparty/samtools -lbam -pthread
 CFLAGS=-c -fPIC -Wall -Iinc -Ithirdparty/samtools -DUSE_BAM=1 -DMACHTYPE_$(MACHTYPE)
@@ -13,10 +14,13 @@ SHAREDOUT=libkent.so
 
 all: $(SOURCES) $(LIBOUT) $(HEADERS) THIRDPARTY
 
-THIRDPARTY: thirdparty/samtools/libbam.a
+THIRDPARTY: thirdparty/samtools/libbam.a thirdparty/sparsehash/include/sparsehash/sparse_hash_map
 
-thirdparty/samtools/libbam.a:
-	cd thirdparty/samtools && make && cd ../..
+thirdparty/samtools/libbam.a: thirdparty/samtools/sam.h
+    cd thirdparty/samtools && make CC=${CC} CXX=${CXX} && cd ../..
+
+thirdparty/sparsehash/include/sparsehash/sparse_hash_map: thirdparty/sparsehash/src/sparsehash/sparse_hash_map
+    cd thirdparty/sparsehash && ./configure --prefix=`pwd` CC=${CC} CXX=${CXX} && make && make install && cd ../..
 
 $(LIBOUT): $(OBJECTS)
 	ar rcus $(LIBOUT) $(OBJECTS)
