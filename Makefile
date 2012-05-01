@@ -17,10 +17,10 @@ all: $(SOURCES) $(LIBOUT) $(HEADERS) THIRDPARTY
 THIRDPARTY: thirdparty/samtools/libbam.a thirdparty/sparsehash/include/sparsehash/sparse_hash_map
 
 thirdparty/samtools/libbam.a: thirdparty/samtools/sam.h
-    cd thirdparty/samtools && make CC=${CC} CXX=${CXX} && cd ../..
+	cd thirdparty/samtools && make CC=${CC} CXX=${CXX} && cd ../..
 
 thirdparty/sparsehash/include/sparsehash/sparse_hash_map: thirdparty/sparsehash/src/sparsehash/sparse_hash_map
-    cd thirdparty/sparsehash && ./configure --prefix=`pwd` CC=${CC} CXX=${CXX} && make && make install && cd ../..
+	cd thirdparty/sparsehash && ./configure --prefix=`pwd` CC=${CC} CXX=${CXX} && make && make install && cd ../..
 
 $(LIBOUT): $(OBJECTS)
 	ar rcus $(LIBOUT) $(OBJECTS)
