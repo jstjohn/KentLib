@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 /* Process command line. */
 {
   optionInit(&argc, argv, options);
-  if(optionExists((char*)"help") || argc != 2){
+  if(optionExists((char*)"help") || argc != 3){
     usage();
   }
   int K = optionInt((char*)"K",DEF_K);
