@@ -46,7 +46,7 @@ void usage()
       "Options:\n"
       "\t-help\tPrints this message.\n"
       "\t-K=NUM\tK-mer to compute mapability for (default 35)\n"
-      "\t-initHashSize=NUM\tInitial size of hash for maybe a slight performance boost, larger numbers consume more memory (default 2000000000)"
+      /*"\t-initHashSize=NUM\tInitial size of hash for maybe a slight performance boost, larger numbers consume more memory (default 2000000000)"*/
   );
 }//end usage()
 
@@ -55,6 +55,7 @@ static struct optionSpec options[] = {
     /* Structure holding command line options */
     {(char*)"help",OPTION_STRING},
     {(char*)"K",OPTION_INT},
+    {(char*)"initHashSize",OPTION_INT},
     {NULL, 0}
 }; //end options()
 
@@ -75,9 +76,9 @@ char op_complement_upper(char c){
 
 struct eqstr
 {
-  bool operator()(const char* s1, const char* s2) const
+  bool operator()(string s1, string s2) const
   {
-    return((s1 == s2) || (s1 && s2 && strcmp(s1, s2) == 0));
+    return(s1 == s2);
   }
 };
 
@@ -91,14 +92,14 @@ string getMinKmerFromSeq(char *seq, int K){
 }
 
 
-void fillKmerFreqHash(char *fastaFile, const int K, sparse_hash_map<const char*, unsigned int, hash<const char*>, eqstr> &mapToBuild){
+void fillKmerFreqHash(char *fastaFile, const int K, sparse_hash_map<string, unsigned int, hash<string>, eqstr> &mapToBuild){
   struct lineFile *lf = lineFileOpen(fastaFile,TRUE);
   DNA *seq;
   int seqLen;
   char *seqName;
   while(faMixedSpeedReadNext(lf, &seq, &seqLen, &seqName)){
     //process this fasta entry, store all K-mers without 'N's in the map
-    for(int i=0; i<seqLen; i++){
+    for(int i=0; i <= (seqLen-K); i++){
       string kmer = getMinKmerFromSeq(seq+i,K);
 
       size_t found = kmer.find('N');
@@ -106,7 +107,7 @@ void fillKmerFreqHash(char *fastaFile, const int K, sparse_hash_map<const char*,
         i+=int(found);
       }else{
         //no N's
-        mapToBuild[kmer.c_str()]++;
+        mapToBuild[kmer]++;
       }
     }
   }
@@ -114,7 +115,7 @@ void fillKmerFreqHash(char *fastaFile, const int K, sparse_hash_map<const char*,
   lineFileClose(&lf);
 }
 
-void printDukeUniquenessWiggle(char * fastaFile, char * outFile, const int K, sparse_hash_map<const char*, unsigned int, hash<const char*>, eqstr> &mapToBuild){
+void printDukeUniquenessWiggle(char * fastaFile, char * outFile, const int K, sparse_hash_map<string, unsigned int, hash<string>, eqstr> &mapToBuild){
   struct lineFile *lf = lineFileOpen(fastaFile,TRUE);
   DNA *seq;
   int seqLen;
@@ -124,18 +125,18 @@ void printDukeUniquenessWiggle(char * fastaFile, char * outFile, const int K, sp
   while(faMixedSpeedReadNext(lf, &seq, &seqLen, &seqName)){
     //process this fasta entry, store all K-mers without 'N's in the map
     wigFile << "fixedStep  chrom=" << seqName << "  start=0  step=1" << endl;
-    for(int i=0; i<seqLen; i++){
+    for(int i=0; i <= (seqLen-K); i++){
       string kmer = getMinKmerFromSeq(seq+i,K);
       size_t found = kmer.find('N');
       if(found != string::npos){
-        for(int j=i; j< (i+int(found)); j++){
+        for(int j=i; j< (i+int(found)) && j < seqLen; j++){
           /*uniqueness=1=1 occurence,0.5=2,0.33=3,0.25=4,0=5 or more (or containing sequence ambiguities)*/
           wigFile << 0 << endl;
         }
         i+=int(found);
       }else{
         //no N's
-        unsigned int count = mapToBuild[kmer.c_str()];
+        unsigned int count = mapToBuild[kmer];
         /*uniqueness=1=1 occurence,0.5=2,0.33=3,0.25=4,0=5 or more (or containing sequence ambiguities)*/
         switch(count){
         case 1:
@@ -174,7 +175,7 @@ int main(int argc, char *argv[])
   int iHash = optionInt((char*)"initHashSize",DEF_HASH_INIT);
 
   //step 1: load up the hash
-  sparse_hash_map<const char*, unsigned int, hash<const char*>, eqstr> kmerFreqHash;
+  sparse_hash_map<string, unsigned int, hash<string>, eqstr> kmerFreqHash;
   fillKmerFreqHash(argv[1],K,kmerFreqHash);
 
   //step 2: pass over assembly again and print the uniqueness
