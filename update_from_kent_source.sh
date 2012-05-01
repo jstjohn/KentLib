@@ -19,4 +19,4 @@ done
 popd
 
 make clean
-make
+make CC=gcc44
