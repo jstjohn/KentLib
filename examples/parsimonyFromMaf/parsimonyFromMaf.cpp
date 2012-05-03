@@ -52,7 +52,7 @@ vector<string> split(const string &s, char delim) {
   return(split(s, delim, elems));
 }
 
-#define DEF_MIN_LEN (1000)
+#define DEF_MIN_LEN (150)
 #define DEF_MIN_SCORE (10000)
 
 
@@ -69,7 +69,7 @@ void usage()
       "Options:\n"
       "\t-help\tPrints this message.\n"
       "\t-minScore=NUM\tMinimum MAF alignment score to consider (default 10000)\n"
-      "\t-minAlnLen=NUM\tMinimum MAF alignment block length to consider (default 1000)\n"
+      "\t-minAlnLen=NUM\tMinimum MAF alignment block length to consider (default 150)\n"
 
   );
 }//end usage()
@@ -90,7 +90,7 @@ static struct optionSpec options[] = {
  *
  */
 void incrementBranchCountsFromFilteredAlnBlock(
-    map<unsigned int, string> &filteredSpeciesBitFlagToMafComp,
+    map<unsigned int, string> &filteredSpeciesBitFlagToDNA,
     map<unsigned int,unsigned int> &branchMutationCounts){
 
   char DNAc[] = {'A','C','G','T'};
@@ -103,8 +103,8 @@ void incrementBranchCountsFromFilteredAlnBlock(
   //find columns that are all in [a,c,g,t]
   bool first = true;
   set<int> good_sites;
-  for(map<unsigned int, string>::iterator it = filteredSpeciesBitFlagToMafComp.begin();
-      it != filteredSpeciesBitFlagToMafComp.end(); ++it){
+  for(map<unsigned int, string>::iterator it = filteredSpeciesBitFlagToDNA.begin();
+      it != filteredSpeciesBitFlagToDNA.end(); ++it){
     string seq = it->second;
     iteratorOrderedSpeciesBitFlags.push_back(it->first);
     for(int i = 0; i < seq.size();i++){
@@ -131,8 +131,8 @@ void incrementBranchCountsFromFilteredAlnBlock(
     int site = *it;
     vector<char> alnColumn;
     set<char> seen;
-    for(map<unsigned int, string>::iterator sit = filteredSpeciesBitFlagToMafComp.begin();
-        sit != filteredSpeciesBitFlagToMafComp.end(); ++sit){
+    for(map<unsigned int, string>::iterator sit = filteredSpeciesBitFlagToDNA.begin();
+        sit != filteredSpeciesBitFlagToDNA.end(); ++sit){
       alnColumn.push_back(sit->second[site]);
       seen.insert(sit->second[site]);
     }
@@ -250,6 +250,8 @@ void writeTreeBranches(map<string, unsigned int>speciesToBitFlag,
         if(!first)
           cout << ',';
         cout << bsit->first;
+        if(first)
+          first = false;
       }
     }
     cout << "):" << count << endl;
