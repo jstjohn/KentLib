@@ -1,0 +1,6 @@
+parsimonyFromMaf
+.cproject
+.project
+.settings
+*.maf
+*.txt
