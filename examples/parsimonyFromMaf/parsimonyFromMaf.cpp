@@ -25,6 +25,7 @@ extern "C" {
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <ctype.h>
 
 //#define NDEBUG
 #include <assert.h>
