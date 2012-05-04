@@ -108,8 +108,9 @@ void incrementBranchCountsFromFilteredAlnBlock(
     string seq = it->second;
     iteratorOrderedSpeciesBitFlags.push_back(it->first);
     for(int i = 0; i < seq.size();i++){
-      if(DNA.count(toupper(seq[i])) && first){
-        good_sites.insert(i);
+      if(DNA.count(toupper(seq[i]))){
+        if(first)
+          good_sites.insert(i);
       }else if(!first){
         good_sites.erase(i);
       }
