@@ -108,14 +108,10 @@ void incrementBranchCountsFromFilteredAlnBlock(
     string seq = it->second;
     iteratorOrderedSpeciesBitFlags.push_back(it->first);
     for(int i = 0; i < seq.size();i++){
-      if(DNA.count(seq[i])){
-        if(first){
-          good_sites.insert(i);
-        }
-      }else{
-        if(!first){
-          good_sites.erase(i);
-        }
+      if(DNA.count(toupper(seq[i])) && first){
+        good_sites.insert(i);
+      }else if(!first){
+        good_sites.erase(i);
       }
     }//end loop over sites
     if(first)
@@ -133,8 +129,8 @@ void incrementBranchCountsFromFilteredAlnBlock(
     set<char> seen;
     for(map<unsigned int, string>::iterator sit = filteredSpeciesBitFlagToDNA.begin();
         sit != filteredSpeciesBitFlagToDNA.end(); ++sit){
-      alnColumn.push_back(sit->second[site]);
-      seen.insert(sit->second[site]);
+      alnColumn.push_back(toupper(sit->second[site]));
+      seen.insert(toupper(sit->second[site]));
     }
     if(seen.size() > 2)
       continue; //interested in bialelic sites
