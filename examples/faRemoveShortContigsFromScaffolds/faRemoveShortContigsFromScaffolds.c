@@ -31,7 +31,9 @@
  */
 
 #define MIN_SEQ_LEN 200
-#define MIN_GAP_LEN 25
+#define MIN_GAP_LEN 10
+#define MIN_TO_CALL_GAP_LEN 2
+#define LINE_WRAP_LEN 50
 
 
 
@@ -48,7 +50,9 @@ void usage()
       "\tUsage: faRemoveShortContigsFromScaffolds [options] genome.scaf.fa out.genome.scaf.fa\n"
       "\noptions:\n"
       "\t-minLen=NUM\tMinimum contig length in scaffold file to keep. (default: 200)\n"
-      "\t-minGapLen=NUM\tMinimum contig length in scaffold file to keep. (default: 25)\n"
+      "\t-lineWrapLen=NUM\tLength of line wrap in output fasta file. (default: 50)\n"
+      "\t-minToCallGapLen=NUM\tMinimum length of a stretch of 'N' to be considered a gap. (default: 2)\n"
+      "\t-minGapLen=NUM\tIf a gap is found, minimum length of that gap in output file. (default: 10)\n"
       "\t-help\tWrites this help to the screen, and exits.\n"
       );
 }//end usage()
@@ -58,6 +62,8 @@ static struct optionSpec options[] = {
     /* Structure holding command line options */
     {"help",OPTION_BOOLEAN},
     {"minLen",OPTION_INT},
+    {"lineWrapLen",OPTION_INT},
+    {"minToCallGapLen",OPTION_INT},
     {"minGapLen",OPTION_INT},
     {NULL, 0}
 }; //end options()
@@ -111,7 +117,49 @@ inline int endNTrimPos(DNA *seq, int len){
   return(i+1);
 }
 
-void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int minLen, const int minGapLen){
+inline void faWriteCWithMinGaps(FILE *f, char c, const int maxPerLine, int *leftPerLine){
+  fputc(c,f);
+  if((--(*leftPerLine)) == 0){
+    fputc('\n',f);
+    (*leftPerLine) = maxPerLine;
+  }
+}
+
+void faWriteWithMinGaps(FILE *f, char *startLine, const DNA *const letters, const int dnaSize, const int maxPerLine, const int minToCallGapLen, const int minGapLen){
+  int lettersLeft = dnaSize;
+  int leftPerLine = maxPerLine;
+  int gapLen = 0;
+  if (startLine != NULL)
+      fprintf(f, ">%s\n", startLine);
+  int i;
+  for(i=0;i<dnaSize;i++){
+    char c = letters[i];
+    char uc = toupper(c);
+
+    if(uc == 'N'){
+      gapLen++;
+      faWriteCWithMinGaps(f,'N',maxPerLine,&leftPerLine);
+    }else{
+
+      //deal with previous gap
+      if(gapLen > 0){
+        if(gapLen >= minToCallGapLen && gapLen < minGapLen){
+          int j;
+          for(j=gapLen; j<minGapLen;j++)
+            faWriteCWithMinGaps(f,'N',maxPerLine,&leftPerLine);
+        }
+        //reset gapLen
+        gapLen = 0;
+      }
+      //now write out the char
+      faWriteCWithMinGaps(f,c,maxPerLine,&leftPerLine);
+    }
+  }
+}
+
+void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream,
+    const int minLen, const int minToCallGapLen, const int minGapLen, const int lineWrapLen){
+
   struct lineFile *lf = lineFileOpen(faFile,TRUE);
   DNA *seq;
   int seqLen , i = 0;
@@ -124,14 +172,14 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
     for(i=0;i<seqLen;i++){
       if(toupper(seq[i]) == 'N'){
         gapLen++;
-        if(ctgLen-gapLen+1 > 0 && ctgLen-gapLen+1 < minLen && gapLen == minGapLen){
+        if(ctgLen-gapLen+1 > 0 && ctgLen-gapLen+1 < minLen && gapLen == minToCallGapLen){
           //need to mask
           //we have seen minGapLen N's already
           //and ctgLen has been incremented by minGapLen-1 N's
           //into this gap
           maskRange(seq,i-ctgLen,i-gapLen+1);
         }
-        if(gapLen >= minGapLen){
+        if(gapLen >= minToCallGapLen){
           ctgLen = 0; //make sure it is 0 since we have seen a real gap
         }else{
           ctgLen++;
@@ -162,9 +210,10 @@ void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream, const int 
     if(afterTrimLen < minLen)
       continue;
 
-    if(allN(seq+beginPos, afterTrimLen) == FALSE)
-      faWriteNext(outstream, seqName, seq+beginPos, afterTrimLen);
-
+    if(allN(seq+beginPos, afterTrimLen) == FALSE){
+      //faWriteNext(outstream, seqName, seq+beginPos, afterTrimLen);
+      faWriteWithMinGaps(outstream, seqName, seq+beginPos, afterTrimLen, lineWrapLen, minToCallGapLen, minGapLen);
+    }
   }//end loop over fasta sequences
   faFreeFastBuf();
   lineFileClose(&lf);
@@ -180,11 +229,13 @@ int main(int argc, char *argv[])
   boolean help = optionExists("help");
   int minLen = optionInt("minLen",MIN_SEQ_LEN);
   int minGapLen = optionInt("minGapLen",MIN_GAP_LEN);
+  int minToCallGapLen = optionInt("minToCallGapLen",MIN_TO_CALL_GAP_LEN);
+  int lineWrapLen = optionInt("lineWrapLen",LINE_WRAP_LEN);
 
   if(help) usage();
   if(argc != 3) usage();
   FILE *outstream = fopen(argv[2],"w");
-  faRemoveShortContigsFromScaffolds(argv[1], outstream, minLen, minGapLen);
+  faRemoveShortContigsFromScaffolds(argv[1], outstream, minLen, minToCallGapLen, minGapLen, lineWrapLen);
   fclose(outstream);
   return(0);
 } //end main()
