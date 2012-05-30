@@ -5,6 +5,7 @@
 #include "options.h"
 #include "dnaseq.h"
 #include "fa.h"
+#include <stdbool.h>
 
 
 int minContigGap = 25;
@@ -12,6 +13,7 @@ int minScaffoldGap = 50000;
 int unknownSize = 100;
 int minRangeToCallUnknown = 2000;
 int maxRangeToCallUnknown = 50000;
+bool wgs = false;
 
 void usage()
 /* Explain usage and exit. */
@@ -22,6 +24,7 @@ void usage()
       "   hgFakeAgpForNcbi input.fa output.agp\n"
       "options:\n"
       "   -minContigGap=N Minimum size for a gap between contigs.  Default %d\n"
+      "   -WGS This is a wgs project, so mark contigs as 'W'. Default, marks as draft 'D'\n"
       "   -minScaffoldGap=N Min size for a gap between scaffolds. Default %d\n"
       "   -minRangeToCallUnknown=N Min size for a gap between scaffolds. Default %d\n"
       "   -maxRangeToCallUnknown=N Min size for a gap between scaffolds. Default %d\n"
@@ -33,6 +36,10 @@ void usage()
 static struct optionSpec options[] = {
     {"minContigGap", OPTION_INT},
     {"minScaffoldGap", OPTION_INT},
+    {"minRangeToCallUnknown", OPTION_INT},
+    {"maxRangeToCallUnknown", OPTION_INT},
+    {"unknownSize", OPTION_INT},
+    {"WGS", OPTION_BOOLEAN},
     {NULL, 0},
 };
 
@@ -43,7 +50,10 @@ void agpContigLine(FILE *f, char *name, int seqStart, int seqEnd, int partIx, in
   fprintf(f, "%d\t", seqStart + 1);
   fprintf(f, "%d\t", seqEnd);
   fprintf(f, "%d\t", partIx);
-  fprintf(f, "%c\t", 'D');
+  if(wgs)
+    fprintf(f, "%c\t", 'W');
+  else
+    fprintf(f, "%c\t", 'D');
   fprintf(f, "%s_%d\t", name, contigIx);
   fprintf(f, "1\t");
   fprintf(f, "%d\t", seqEnd - seqStart);
@@ -70,7 +80,7 @@ int agpGapLine(FILE *f, char *name, int seqStart, int seqEnd, int gapSize, int l
 /* Write out agp line for gap. */
 {
   int offset = 0;
-
+  bool unknown = false;
   if(gapSize >= minRangeToCallUnknown && gapSize < maxRangeToCallUnknown){
     offset = unknownSize - gapSize;
     gapSize = unknownSize;
@@ -81,7 +91,10 @@ int agpGapLine(FILE *f, char *name, int seqStart, int seqEnd, int gapSize, int l
   fprintf(f, "%d\t", seqStart + 1);
   fprintf(f, "%d\t", seqEnd);
   fprintf(f, "%d\t", lineIx);
-  fprintf(f, "%c\t", 'N');
+  if(unknown)
+    fprintf(f, "%c\t", 'U');
+  else
+    fprintf(f, "%c\t", 'N');
   fprintf(f, "%d\t", gapSize);
   if (gapSize >= minScaffoldGap)
     fprintf(f, "contig\tno\n");
@@ -156,6 +169,8 @@ int main(int argc, char *argv[])
   minRangeToCallUnknown = optionInt("minRangeToCallUnknown", minRangeToCallUnknown);
   maxRangeToCallUnknown = optionInt("maxRangeToCallUnknown", maxRangeToCallUnknown);
   unknownSize = optionInt("unknownSize", unknownSize);
+  if(optionExists("WGS"))
+    wgs = true;
   hgFakeAgpForNcbi(argv[1], argv[2]);
   return 0;
 }
