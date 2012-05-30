@@ -125,7 +125,11 @@ inline void faWriteCWithMinGaps(FILE *f, char c, const int maxPerLine, int *left
   }
 }
 
-void faWriteWithMinGaps(FILE *f, char *startLine, const DNA *const letters, const int dnaSize, const int maxPerLine, const int minToCallGapLen, const int minGapLen){
+void faWriteWithMinGaps(FILE *f, char *startLine,
+    const DNA *const letters, const int dnaSize,
+    const int maxPerLine,
+    const int minToCallGapLen,
+    const int minGapLen){
   int lettersLeft = dnaSize;
   int leftPerLine = maxPerLine;
   int gapLen = 0;
@@ -155,6 +159,8 @@ void faWriteWithMinGaps(FILE *f, char *startLine, const DNA *const letters, cons
       faWriteCWithMinGaps(f,c,maxPerLine,&leftPerLine);
     }
   }
+  //newline after sequence
+  fputc('\n',f);
 }
 
 void faRemoveShortContigsFromScaffolds(char *faFile, FILE *outstream,
