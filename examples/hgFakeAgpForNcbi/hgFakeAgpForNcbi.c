@@ -19,7 +19,7 @@ void usage()
 /* Explain usage and exit. */
 {
   errAbort(
-      "hgFakeAgpForNcbi - Create fake AGP file by looking at N's using NCBI's specs\n"
+      "hgFakeAgpForNcbi - Create fake AGP (v1.1) file by looking at N's using NCBI's specs\n"
       "usage:\n"
       "   hgFakeAgpForNcbi input.fa output.agp\n"
       "options:\n"
@@ -143,7 +143,7 @@ void fakeAgpForNcbiFromSeq(struct dnaSeq *seq, FILE *f)
 }
 
 void hgFakeAgpForNcbi(char *faIn, char *agpOut)
-/* hgFakeAgp - Create fake AGP file by looking at N's. */
+/* hgFakeAgpForNcbi - Create fake AGP file by looking at N's. */
 {
   struct lineFile *lf = lineFileOpen(faIn, TRUE);
   FILE *f = mustOpen(agpOut, "w");
