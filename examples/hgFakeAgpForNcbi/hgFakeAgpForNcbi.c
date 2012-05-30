@@ -85,6 +85,7 @@ int agpGapLine(FILE *f, char *name, int seqStart, int seqEnd, int gapSize, int l
     offset = unknownSize - gapSize;
     gapSize = unknownSize;
     seqEnd = seqStart + unknownSize;
+    unknown = true;
   }
 
   fprintf(f, "%s\t", name);
