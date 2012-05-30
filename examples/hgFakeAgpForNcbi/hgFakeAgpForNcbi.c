@@ -9,6 +9,9 @@
 
 int minContigGap = 25;
 int minScaffoldGap = 50000;
+int unknownSize = 100;
+int minRangeToCallUnknown = 2000;
+int maxRangeToCallUnknown = 50000;
 
 void usage()
 /* Explain usage and exit. */
@@ -20,7 +23,10 @@ void usage()
       "options:\n"
       "   -minContigGap=N Minimum size for a gap between contigs.  Default %d\n"
       "   -minScaffoldGap=N Min size for a gap between scaffolds. Default %d\n"
-      , minContigGap, minScaffoldGap
+      "   -minRangeToCallUnknown=N Min size for a gap between scaffolds. Default %d\n"
+      "   -maxRangeToCallUnknown=N Min size for a gap between scaffolds. Default %d\n"
+      "   -unknownSize=N Min size for a gap between scaffolds. Default %d\n"
+      , minContigGap, minScaffoldGap, minRangeToCallUnknown, maxRangeToCallUnknown, unknownSize
   );
 }
 
@@ -60,9 +66,17 @@ char *strNotChar(char *s, char c)
   }
 }
 
-void agpGapLine(FILE *f, char *name, int seqStart, int seqEnd, int gapSize, int lineIx)
+int agpGapLine(FILE *f, char *name, int seqStart, int seqEnd, int gapSize, int lineIx)
 /* Write out agp line for gap. */
 {
+  int offset = 0;
+
+  if(gapSize >= minRangeToCallUnknown && gapSize < maxRangeToCallUnknown){
+    offset = unknownSize - gapSize;
+    gapSize = unknownSize;
+    seqEnd = seqStart + unknownSize;
+  }
+
   fprintf(f, "%s\t", name);
   fprintf(f, "%d\t", seqStart + 1);
   fprintf(f, "%d\t", seqEnd);
@@ -73,6 +87,7 @@ void agpGapLine(FILE *f, char *name, int seqStart, int seqEnd, int gapSize, int 
     fprintf(f, "contig\tno\n");
   else
     fprintf(f, "fragment\tyes\n");
+  return(offset);
 }
 
 void fakeAgpForNcbiFromSeq(struct dnaSeq *seq, FILE *f)
@@ -84,7 +99,7 @@ void fakeAgpForNcbiFromSeq(struct dnaSeq *seq, FILE *f)
   char *gapStart, *gapEnd, *contigStart;
   char *dna, *seqStart, *seqEnd;
   int gapSize;
-
+  int offset = 0;
   dna = seqStart = contigStart = seq->dna;
   seqEnd = seqStart + seq->size;
   for (;;)
@@ -92,7 +107,7 @@ void fakeAgpForNcbiFromSeq(struct dnaSeq *seq, FILE *f)
     gapStart = strchr(dna, 'n');
     if (gapStart == NULL)
     {
-      agpContigLine(f, seq->name, contigStart - seqStart, seqEnd - seqStart,
+      agpContigLine(f, seq->name, contigStart - seqStart + offset, seqEnd - seqStart + offset,
           ++partIx, ++contigIx);
       break;
     }
@@ -103,9 +118,9 @@ void fakeAgpForNcbiFromSeq(struct dnaSeq *seq, FILE *f)
     if (gapSize >= minContigGap || gapEnd == seqEnd)
     {
       if (gapStart != contigStart)
-        agpContigLine(f, seq->name, contigStart - seqStart, gapStart - seqStart,
+        agpContigLine(f, seq->name, contigStart - seqStart + offset, gapStart - seqStart + offset,
             ++partIx, ++contigIx);
-      agpGapLine(f, seq->name, gapStart - seqStart, gapEnd - seqStart, gapSize, ++partIx);
+      offset += agpGapLine(f, seq->name, gapStart - seqStart + offset, gapEnd - seqStart + offset, gapSize, ++partIx);
       if (gapEnd == seqEnd)
         break;
       contigStart = gapEnd;
@@ -138,6 +153,9 @@ int main(int argc, char *argv[])
     usage();
   minContigGap = optionInt("minContigGap", minContigGap);
   minScaffoldGap = optionInt("minScaffoldGap", minScaffoldGap);
+  minRangeToCallUnknown = optionInt("minRangeToCallUnknown", minRangeToCallUnknown);
+  maxRangeToCallUnknown = optionInt("maxRangeToCallUnknown", maxRangeToCallUnknown);
+  unknownSize = optionInt("unknownSize", unknownSize);
   hgFakeAgpForNcbi(argv[1], argv[2]);
   return 0;
 }
