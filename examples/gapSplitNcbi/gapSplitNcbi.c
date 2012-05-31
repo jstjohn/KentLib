@@ -87,7 +87,7 @@ void gapSplit(char *input, char *output)
         }
       }
     }
-    if (charLineCount % 60) { fprintf(f,"\n"); }
+    if (charLineCount % wrapSize) { fprintf(f,"\n"); }
   }
 }
 
