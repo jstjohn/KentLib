@@ -461,7 +461,7 @@ return median;
 }
 
 void doubleBoxWhiskerCalc(int count, double *array, double *retMin,
-        double *retQ1, double *retMedian, double *retQ3, double *retMax)
+                          double *retQ1, double *retMedian, double *retQ3, double *retMax)
 /* Calculate what you need to draw a box and whiskers plot from an array of doubles. */
 {
 doubleSort(count, array);
@@ -518,7 +518,7 @@ return median;
 }
 
 void slDoubleBoxWhiskerCalc(struct slDouble *list, double *retMin,
-        double *retQ1, double *retMedian, double *retQ3, double *retMax)
+                            double *retQ1, double *retMedian, double *retQ3, double *retMax)
 /* Calculate what you need to draw a box and whiskers plot from a list of slDoubles. */
 {
 int i,count = slCount(list);
@@ -1101,7 +1101,7 @@ char *slPairListToString(struct slPair *list,boolean quoteIfSpaces)
 // Don't rely on dyString.  We should do the accounting ourselves and not create extra dependencies.
 int count = 0;
 struct slPair *pair = list;
-for(;pair != NULL; pair = pair->next)
+for (;pair != NULL; pair = pair->next)
     {
     assert(pair->name != NULL && pair->val != NULL); // Better assert and get this over with,
                                                      // complete with stack
@@ -1122,7 +1122,7 @@ if (count == 0)
 char *str = needMem(count+5); // A bit of slop
 
 char *strPtr = str;
-for(pair = list; pair != NULL; pair = pair->next, strPtr += strlen(strPtr))
+for (pair = list; pair != NULL; pair = pair->next, strPtr += strlen(strPtr))
     {
     if (pair != list) // Not first cycle
         *strPtr++ = ' ';
@@ -1176,7 +1176,7 @@ if (count == 0)
 char *str = needMem(count+5); // A bit of slop
 
 char *strPtr = str;
-for(pair = list; pair != NULL; pair = pair->next, strPtr += strlen(strPtr))
+for (pair = list; pair != NULL; pair = pair->next, strPtr += strlen(strPtr))
     {
     if (pair != list)
         *strPtr++ = delimiter;
@@ -1363,7 +1363,7 @@ char * findWordByDelimiter(char *word,char delimit, char *line)
 {
 int ix;
 char *p=line;
-while(p!=NULL && *p!='\0')
+while (p!=NULL && *p!='\0')
     {
     for (ix = 0;
          word[ix] != '\0' && word[ix] == *p;
@@ -1375,10 +1375,8 @@ while(p!=NULL && *p!='\0')
         || (delimit == ' ' && isspace(*p)))
             return p - ix; // matched and delimited
         }
-    for(;   *p!='\0'
-         && *p!=delimit
-         && (delimit != ' ' || !isspace(*p));
-        p++) ;    // advance to next delimit
+    for (;   *p!='\0' && *p!=delimit && (delimit != ' ' || !isspace(*p)); p++)
+        ;  // advance to next delimit
     if (*p!='\0')
         {
         p++;
@@ -2039,7 +2037,7 @@ if (s != NULL)
         beyond = strchr(s,delimit);
     if (beyond != NULL)
         {
-        for(beyond++;*beyond == delimit;beyond++) ;
+        for (beyond++;*beyond == delimit;beyond++) ;
         if (*beyond != '\0')
             return beyond;
         }
@@ -2301,7 +2299,7 @@ if (*line == 0)
     return NULL;
 int size=0;
 char *e;
-for(e=line;*e!=0;e++)
+for (e=line;*e!=0;e++)
     {
     if (*e==delimit)
         break;
@@ -2347,7 +2345,7 @@ int cntStringsInList(char *pStrings)
 {
 int cnt=0;
 char *p = pStrings;
-while(nextStringInList(&p) != NULL)
+while (nextStringInList(&p) != NULL)
     cnt++;
 return cnt;
 }
@@ -2728,7 +2726,7 @@ return newList;
 }
 
 void fileOffsetSizeFindGap(struct fileOffsetSize *list,
-        struct fileOffsetSize **pBeforeGap, struct fileOffsetSize **pAfterGap)
+                           struct fileOffsetSize **pBeforeGap, struct fileOffsetSize **pAfterGap)
 /* Starting at list, find all items that don't have a gap between them and the previous item.
  * Return at gap, or at end of list, returning pointers to the items before and after the gap. */
 {
@@ -3403,7 +3401,7 @@ tp->tm_mday  += addDays;
 tp->tm_mon   += addMonths;
 tp->tm_year  += addYears;
 int dom=28;
-while( (tp->tm_mon >11  || tp->tm_mon <0)
+while ( (tp->tm_mon >11  || tp->tm_mon <0)
     || (tp->tm_mday>dom || tp->tm_mday<1) )
     {
     if (tp->tm_mon>11)   // First month: tm.tm_mon is 0-11 range
