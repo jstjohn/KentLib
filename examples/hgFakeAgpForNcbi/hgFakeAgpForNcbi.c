@@ -13,7 +13,8 @@ int minScaffoldGap = 50000;
 int unknownSize = 100;
 int minRangeToCallUnknown = 2000;
 int maxRangeToCallUnknown = 50000;
-bool wgs = false;
+bool wgs = true;
+bool v2 = true;
 
 void usage()
 /* Explain usage and exit. */
@@ -24,7 +25,8 @@ void usage()
       "   hgFakeAgpForNcbi input.fa output.agp\n"
       "options:\n"
       "   -minContigGap=N Minimum size for a gap between contigs.  Default %d\n"
-      "   -WGS This is a wgs project, so mark contigs as 'W'. Default, marks as draft 'D'\n"
+      "   -draft This is a wgs project, so mark contigs as 'D'. Default, marks as wgs 'W'\n"
+      "   -agp1 Use agp version 1.1. Default, output version 2.0\n"
       "   -minScaffoldGap=N Min size for a gap between scaffolds. Default %d\n"
       "   -minRangeToCallUnknown=N Min size for a gap between scaffolds. Default %d\n"
       "   -maxRangeToCallUnknown=N Min size for a gap between scaffolds. Default %d\n"
@@ -39,7 +41,8 @@ static struct optionSpec options[] = {
     {"minRangeToCallUnknown", OPTION_INT},
     {"maxRangeToCallUnknown", OPTION_INT},
     {"unknownSize", OPTION_INT},
-    {"WGS", OPTION_BOOLEAN},
+    {"draft", OPTION_BOOLEAN},
+    {"agp1", OPTION_BOOLEAN},
     {NULL, 0},
 };
 
@@ -99,8 +102,13 @@ int agpGapLine(FILE *f, char *name, int seqStart, int seqEnd, int gapSize, int l
   fprintf(f, "%d\t", gapSize);
   if (gapSize >= minScaffoldGap)
     fprintf(f, "contig\tno\n");
-  else
-    fprintf(f, "fragment\tyes\n");
+  else{
+    if(v2){
+      fprintf(f, "scaffold\tyes\tpaired-ends\n");
+    }else{
+      fprintf(f, "fragment\tyes\n");
+    }
+  }
   return(offset);
 }
 
@@ -170,8 +178,10 @@ int main(int argc, char *argv[])
   minRangeToCallUnknown = optionInt("minRangeToCallUnknown", minRangeToCallUnknown);
   maxRangeToCallUnknown = optionInt("maxRangeToCallUnknown", maxRangeToCallUnknown);
   unknownSize = optionInt("unknownSize", unknownSize);
-  if(optionExists("WGS"))
-    wgs = true;
+  if(optionExists("draft"))
+    wgs = false;
+  if(optionExists("agp1"))
+    v2 = false;
   hgFakeAgpForNcbi(argv[1], argv[2]);
   return 0;
 }
