@@ -158,6 +158,11 @@ void hgFakeAgpForNcbi(char *faIn, char *agpOut)
   FILE *f = mustOpen(agpOut, "w");
   struct dnaSeq seq;
 
+  if(v2)
+    fprintf(f, "##agp-version\t2.0\n");
+  else
+    fprintf(f, "##agp-version\t1.1\n");
+
   while (faSpeedReadNext(lf, &seq.dna, &seq.size, &seq.name))
   {
     fakeAgpForNcbiFromSeq(&seq, f);
